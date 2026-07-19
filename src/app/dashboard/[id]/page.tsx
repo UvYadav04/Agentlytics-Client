@@ -1,10 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetDashboardQuery } from "@/lib/api/apiSlice";
 
 export default function DashboardDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: dashboard, isError, isLoading } = useGetDashboardQuery(params.id);
 
   if (isError) return <div className="p-10 text-center text-rust">Failed to load dashboard</div>;
@@ -12,6 +13,12 @@ export default function DashboardDetailPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
+      <button
+        onClick={() => router.back()}
+        className="mb-4 flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-accent-dark"
+      >
+        &#8592; Back to chat
+      </button>
       <h1 className="text-xl font-semibold mb-6">{dashboard.name}</h1>
 
       {dashboard.charts.length === 0 ? (

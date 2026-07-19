@@ -22,6 +22,7 @@ const config: Config = {
         gold: "#D9A566",
         plum: "#8B6F9E",
         rust: "#B0562B",
+        clay: "#A85D3A",
       },
       fontFamily: {
         sans: [

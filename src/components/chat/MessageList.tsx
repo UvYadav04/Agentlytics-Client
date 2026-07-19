@@ -11,7 +11,7 @@ function ChartThumb({ chartId }: { chartId: string }) {
   return (
     <Link
       href={`/chart/${chartId}`}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs hover:border-accent transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-medium transition-colors hover:border-accent hover:bg-accent-soft/50 hover:text-accent-dark"
     >
       <span className="h-1.5 w-1.5 rounded-full bg-accent" />
       {chart?.title || "Loading..."}
@@ -24,7 +24,7 @@ function ReportThumb({ reportId }: { reportId: string }) {
   return (
     <Link
       href={`/report/${reportId}`}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs hover:border-accent transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-medium transition-colors hover:border-plum hover:bg-plum/10 hover:text-plum"
     >
       <span className="h-1.5 w-1.5 rounded-full bg-plum" />
       {report?.title || "Loading..."}
@@ -46,52 +46,51 @@ export default function MessageList({
   if (messages.length === 0 && !liveInvestigationId) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center text-center text-muted px-6">
-        <div className="mb-3 h-12 w-12 rounded-full bg-accent-soft flex items-center justify-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-accent/20 bg-accent-soft">
           <span className="h-3 w-3 rounded-full bg-accent" />
         </div>
         <p className="text-sm max-w-sm">
-          Upload a file on the left, then ask a question about it - every
-          answer traces back to the file it came from.
+          Upload a file, get files ready and analyze your data.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+    <div className="flex-1 overflow-y-auto bg-bg px-6 py-6 space-y-5">
       {messages.map((m) => (
         <div
           key={m.id}
           className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
         >
-          <div
-            className={`max-w-2xl rounded-card px-4 py-3 shadow-card ${
-              m.role === "user"
-                ? "bg-accent text-white"
-                : "bg-card border border-border"
-            }`}
-          >
+          <div className="max-w-2xl">
+            {m.role === "assistant" && m.investigation_id && (
+              <InvestigationTrail investigationId={m.investigation_id} live={false} />
+            )}
+
             {m.role === "assistant" ? (
-              <div className="markdown text-sm">
+              <div className={`markdown text-base ${m.investigation_id ? "mt-3" : ""}`}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {m.content}
                 </ReactMarkdown>
               </div>
             ) : (
-              <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+              <p className="rounded-card border border-border px-4 py-2.5 text-base whitespace-pre-wrap">
+                {m.content}
+              </p>
             )}
 
             {(m.chart_ids.length > 0 || m.report_id) && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div
+                className={`mt-3 flex flex-wrap gap-2 ${
+                  m.role === "user" ? "justify-end" : ""
+                }`}
+              >
                 {m.chart_ids.map((id) => (
                   <ChartThumb key={id} chartId={id} />
                 ))}
                 {m.report_id && <ReportThumb reportId={m.report_id} />}
               </div>
-            )}
-
-            {m.role === "assistant" && m.investigation_id && (
-              <InvestigationTrail investigationId={m.investigation_id} live={false} />
             )}
           </div>
         </div>
@@ -99,15 +98,10 @@ export default function MessageList({
 
       {liveInvestigationId && (
         <div className="flex justify-start">
-          <div className="max-w-2xl rounded-card border border-border bg-card px-4 py-3 shadow-card">
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-              Investigating...
-            </div>
+          <div className="max-w-2xl">
             <InvestigationTrail
               investigationId={liveInvestigationId}
               live
-              autoOpen
               onTerminal={onLiveTerminal}
             />
           </div>

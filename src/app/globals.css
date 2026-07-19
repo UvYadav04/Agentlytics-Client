@@ -1,6 +1,12 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
+
+/* Everything below is plain CSS, deliberately placed BEFORE `@tailwind
+   utilities` (see the bottom of this file) rather than after it. Tailwind
+   utility classes need to win the cascade over these when both land on the
+   same element (e.g. `glow-blob bg-accent opacity-20` should actually be
+   20% opacity, not the 0.5 default below) - that only happens if the
+   utilities layer compiles in later in the stylesheet. */
 
 * {
   box-sizing: border-box;
@@ -79,3 +85,77 @@ body {
   padding: 0.4em 0.6em;
   text-align: left;
 }
+
+/* Stretches Google's rendered Sign In button (its outer iframe element -
+   the element itself is same-origin DOM even though its content isn't) to
+   fill the invisible overlay in GoogleLoginButton, so the whole visible
+   custom button is clickable, not just Google's default pill size. */
+.gsi-overlay iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.glow-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@keyframes float-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, -24px) scale(1.08);
+  }
+}
+@keyframes float-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-28px, 22px) scale(1.06);
+  }
+}
+@keyframes float-c {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(18px, 26px) scale(1.1);
+  }
+}
+.animate-float-a {
+  animation: float-a 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-blob,
+  .animate-float-a,
+  .animate-float-b,
+  .animate-float-c {
+    animation: none;
+  }
+}
+.animate-float-b {
+  animation: float-b 13s ease-in-out infinite;
+}
+.animate-float-c {
+  animation: float-c 15s ease-in-out infinite;
+}
+
+/* Faint blueprint-style graph paper backdrop - used behind the architecture
+   page's slides. Neutral (text-color-based) tint, not a color from the
+   palette, so it reads as "technical paper" rather than a brand surface. */
+.grid-bg {
+  background-image: linear-gradient(to right, rgba(38, 38, 36, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(38, 38, 36, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Compiles in last on purpose - see the comment at the top of this file. */
+@tailwind utilities;
