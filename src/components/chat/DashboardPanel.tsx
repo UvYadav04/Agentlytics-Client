@@ -39,7 +39,12 @@ export default function DashboardPanel({
               href={`/dashboard/${d.id}`}
               className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-plum/10 hover:text-plum"
             >
-              <span className="truncate">{d.name}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                {d.real_time && (
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" title="Real-time" />
+                )}
+                <span className="truncate">{d.name}</span>
+              </span>
               <span className="shrink-0 rounded-full bg-border px-1.5 py-0.5 text-[10px] font-medium text-muted">
                 {d.chart_ids.length}
               </span>

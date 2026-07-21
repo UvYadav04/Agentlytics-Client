@@ -100,15 +100,16 @@ function ChatPageInner() {
     setLiveInvestigationId(null);
   }
 
-  function selectChat(id: string) {
+  function selectChat(id: string | null) {
     setChatId(id);
+    setLiveInvestigationId(null);
     setLimitMessage(null);
   }
 
-  async function handleSend(content: string) {
+  async function handleSend(content: string, fileIds: string[]) {
     if (!chatId) return;
     setLimitMessage(null);
-    const res = await sendMessage({ chatId, content }).unwrap();
+    const res = await sendMessage({ chatId, content, fileIds }).unwrap();
     if (res.limited) {
       setLimitMessage(res.limit_message);
       return;
@@ -236,6 +237,7 @@ function ChatPageInner() {
               onLiveTerminal={handleLiveTerminal}
             />
             <InputBar
+              workspaceId={workspaceId ?? ""}
               disabled={!chatId}
               busy={!!liveInvestigationId}
               onSend={handleSend}

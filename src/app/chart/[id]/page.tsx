@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useGetChartQuery } from "@/lib/api/apiSlice";
+import AutoHeightIframe from "@/components/AutoHeightIframe";
 
 export default function ChartPage() {
   const params = useParams<{ id: string }>();
@@ -26,12 +27,10 @@ export default function ChartPage() {
       <h1 className="text-xl font-semibold mb-4">{chart.title}</h1>
       {/* Never injected into our DOM - a sandboxed iframe loads the
           generated HTML straight from its own presigned URL. */}
-      <iframe
+      <AutoHeightIframe
         src={chart.url}
-        sandbox="allow-scripts"
-        className="w-full rounded-card border border-border bg-card shadow-card"
-        style={{ height: "80vh" }}
         title={chart.title}
+        className="w-full rounded-card border border-border bg-card shadow-card"
       />
     </main>
   );

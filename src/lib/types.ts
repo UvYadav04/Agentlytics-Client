@@ -93,4 +93,7 @@ export type DashboardDetail = {
   chart_ids: string[];
   created_at: string;
   charts: { id: string; title: string; url: string }[];
+  real_time: boolean;
+  file_ids: string[];
+  last_refreshed_at: string | null;
 };

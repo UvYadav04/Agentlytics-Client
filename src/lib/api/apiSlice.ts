@@ -27,6 +27,9 @@ export type DashboardSummary = {
   name: string;
   chart_ids: string[];
   created_at: string;
+  real_time: boolean;
+  file_ids: string[];
+  last_refreshed_at: string | null;
 };
 
 export type SendMessageResult = {
@@ -192,17 +195,44 @@ export const api = createApi({
         { type: "Chat", id: `LIST-${arg.workspaceId}` },
       ],
     }),
+    renameChat: builder.mutation<Chat, { chatId: string; workspaceId: string; title: string }>({
+      query: ({ chatId, title }) => ({
+        url: `/chats/${chatId}`,
+        method: "PATCH",
+        body: { title },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Chat", id: arg.chatId },
+        { type: "Chat", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    deleteChat: builder.mutation<{ ok: boolean }, { chatId: string; workspaceId: string }>({
+      query: ({ chatId }) => ({ url: `/chats/${chatId}`, method: "DELETE" }),
+      // Cascades server-side to that chat's messages/charts/reports/files, so
+      // sweep every list that could reference them - not just Chat.
+      invalidatesTags: (result, error, arg) => [
+        { type: "Chat", id: arg.chatId },
+        { type: "Chat", id: `LIST-${arg.workspaceId}` },
+        { type: "Message", id: `LIST-${arg.chatId}` },
+        { type: "Chart", id: `WORKSPACE-${arg.workspaceId}` },
+        { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
     getMessages: builder.query<ChatMessage[], string>({
       query: (chatId) => `/chats/${chatId}/messages`,
       providesTags: (result, error, chatId) => [
         { type: "Message" as const, id: `LIST-${chatId}` },
       ],
     }),
-    sendMessage: builder.mutation<SendMessageResult, { chatId: string; content: string }>({
-      query: ({ chatId, content }) => ({
+    sendMessage: builder.mutation<
+      SendMessageResult,
+      { chatId: string; content: string; fileIds?: string[] }
+    >({
+      query: ({ chatId, content, fileIds }) => ({
         url: `/chats/${chatId}/messages`,
         method: "POST",
-        body: { content },
+        body: { content, file_ids: fileIds ?? [] },
       }),
       invalidatesTags: (result, error, arg) => [
         { type: "Message", id: `LIST-${arg.chatId}` },
@@ -257,6 +287,31 @@ export const api = createApi({
         { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
       ],
     }),
+    refreshDashboard: builder.mutation<{ ok: boolean }, { dashboardId: string; workspaceId: string }>({
+      query: ({ dashboardId }) => ({ url: `/dashboards/${dashboardId}/refresh`, method: "POST" }),
+      // The worker job hasn't necessarily finished by the time this resolves - refresh is
+      // fire-and-forget server-side, so this just re-fetches to catch last_refreshed_at
+      // ticking over shortly after. Callers that want to reflect "refreshing..." in the UI
+      // should track that locally around the mutation call, not from this response.
+      invalidatesTags: (result, error, arg) => [
+        { type: "Dashboard", id: arg.dashboardId },
+        { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    relinkDashboardFile: builder.mutation<
+      DashboardSummary,
+      { dashboardId: string; workspaceId: string; oldFileId: string; newFileId: string }
+    >({
+      query: ({ dashboardId, oldFileId, newFileId }) => ({
+        url: `/dashboards/${dashboardId}/relink`,
+        method: "POST",
+        body: { old_file_id: oldFileId, new_file_id: newFileId },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Dashboard", id: arg.dashboardId },
+        { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
 
     // --------------------------------------------------------------- usage
     getUsage: builder.query<UsageInfo, void>({
@@ -286,6 +341,8 @@ export const {
   useDeleteFileMutation,
   useGetChatsQuery,
   useCreateChatMutation,
+  useRenameChatMutation,
+  useDeleteChatMutation,
   useGetMessagesQuery,
   useSendMessageMutation,
   useGetActiveInvestigationQuery,
@@ -295,6 +352,8 @@ export const {
   useGetDashboardQuery,
   useGetDashboardsQuery,
   useCreateDashboardMutation,
+  useRefreshDashboardMutation,
+  useRelinkDashboardFileMutation,
   useGetUsageQuery,
   useSubmitFeedbackMutation,
 } = api;

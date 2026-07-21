@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useGetReportQuery } from "@/lib/api/apiSlice";
+import AutoHeightIframe from "@/components/AutoHeightIframe";
 
 export default function ReportPage() {
   const params = useParams<{ id: string }>();
@@ -62,12 +63,10 @@ export default function ReportPage() {
       )}
 
       {report.status === "ready" && report.format === "html" && report.url && (
-        <iframe
+        <AutoHeightIframe
           src={report.url}
-          sandbox="allow-scripts"
-          className="w-full rounded-card border border-border bg-card shadow-card"
-          style={{ height: "80vh" }}
           title={report.title}
+          className="w-full rounded-card border border-border bg-card shadow-card"
         />
       )}
     </main>
