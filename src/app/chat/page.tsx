@@ -6,7 +6,7 @@ import {
   api,
   useCancelInvestigationMutation,
   useCreateChatMutation,
-  useGetActiveInvestigationQuery,
+  // useGetActiveInvestigationQuery, - unused now that auto-reconnect below is disabled
   useGetChatsQuery,
   useGetMeQuery,
   useGetWorkspacesQuery,
@@ -50,6 +50,19 @@ function ChatPageInner() {
   const [liveInvestigationId, setLiveInvestigationId] = useState<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [startingChat, setStartingChat] = useState(false);
+  // Optimistic echo of the user's own message - shown the instant they hit
+  // send, instead of waiting on the round trip + the getMessages refetch it
+  // triggers (see handleSend/handleStartChat). Cleared only once that
+  // refetch has actually landed, so it hands off to the real message
+  // without a flash or a duplicate bubble.
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  // Date.now() from the moment the user hit send - drives the elapsed-time
+  // readout in MessageList/InvestigationTrail. Set alongside pendingMessage,
+  // but stays set for the WHOLE investigation (through liveInvestigationId
+  // streaming) rather than being cleared with it - only cleared once the
+  // investigation reaches a terminal state (handleLiveTerminal), hits the
+  // usage limit, errors out, or the user switches chats/workspaces.
+  const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
 
   // Accordion state for the left (Files/Chats) and right (Dashboards/Charts)
   // sidebars - only one section per side is open at a time, and both can be
@@ -82,12 +95,19 @@ function ChatPageInner() {
 
   // On chat load, auto-reconnect to a still-running investigation instead
   // of showing an idle input (build plan Phase 5).
-  const { data: activeInvestigation } = useGetActiveInvestigationQuery(chatId ?? "", {
-    skip: !chatId,
-  });
-  useEffect(() => {
-    setLiveInvestigationId(activeInvestigation?.investigation_id ?? null);
-  }, [activeInvestigation]);
+  //
+  // Disabled per request: on refresh, the chat itself still reopens (URL
+  // sync effect above), but a still-running investigation no longer
+  // auto-resumes its live SSE stream/timer - the chat just shows idle
+  // until the user sends a new message, even if a previous investigation
+  // is technically still running server-side. Re-enable by uncommenting
+  // both the query and the effect below.
+  // const { data: activeInvestigation } = useGetActiveInvestigationQuery(chatId ?? "", {
+  //   skip: !chatId,
+  // });
+  // useEffect(() => {
+  //   setLiveInvestigationId(activeInvestigation?.investigation_id ?? null);
+  // }, [activeInvestigation]);
 
   // For the header bar's chat title - RTK Query dedupes this against
   // ChatsPanel's identical query, so it's not an extra network request.
@@ -98,23 +118,38 @@ function ChatPageInner() {
     setWorkspaceId(id);
     setChatId(null);
     setLiveInvestigationId(null);
+    setRequestStartedAt(null);
   }
 
   function selectChat(id: string | null) {
     setChatId(id);
     setLiveInvestigationId(null);
     setLimitMessage(null);
+    setRequestStartedAt(null);
   }
 
   async function handleSend(content: string, fileIds: string[]) {
     if (!chatId) return;
     setLimitMessage(null);
-    const res = await sendMessage({ chatId, content, fileIds }).unwrap();
-    if (res.limited) {
-      setLimitMessage(res.limit_message);
-      return;
+    setPendingMessage(content);
+    setRequestStartedAt(Date.now());
+    try {
+      const res = await sendMessage({ chatId, content, fileIds }).unwrap();
+      if (res.limited) {
+        setLimitMessage(res.limit_message);
+        setRequestStartedAt(null);
+      } else {
+        setLiveInvestigationId(res.investigation_id);
+      }
+      // Pull the just-created user message into the cache before dropping
+      // the optimistic bubble above, so the handoff is invisible.
+      await dispatch(api.endpoints.getMessages.initiate(chatId, { forceRefetch: true }));
+    } catch (err) {
+      setRequestStartedAt(null);
+      throw err;
+    } finally {
+      setPendingMessage(null);
     }
-    setLiveInvestigationId(res.investigation_id);
   }
 
   async function handleStop() {
@@ -128,6 +163,8 @@ function ChatPageInner() {
   async function handleStartChat(content: string) {
     if (!workspaceId || startingChat) return;
     setStartingChat(true);
+    setPendingMessage(content);
+    setRequestStartedAt(Date.now());
     try {
       const chat = await createChat({ workspaceId }).unwrap();
       setChatId(chat.id);
@@ -135,11 +172,17 @@ function ChatPageInner() {
       const res = await sendMessage({ chatId: chat.id, content }).unwrap();
       if (res.limited) {
         setLimitMessage(res.limit_message);
-        return;
+        setRequestStartedAt(null);
+      } else {
+        setLiveInvestigationId(res.investigation_id);
       }
-      setLiveInvestigationId(res.investigation_id);
+      await dispatch(api.endpoints.getMessages.initiate(chat.id, { forceRefetch: true }));
+    } catch (err) {
+      setRequestStartedAt(null);
+      throw err;
     } finally {
       setStartingChat(false);
+      setPendingMessage(null);
     }
   }
 
@@ -151,6 +194,7 @@ function ChatPageInner() {
 
   function handleLiveTerminal() {
     setLiveInvestigationId(null);
+    setRequestStartedAt(null);
     if (!chatId || !workspaceId) return;
     // The worker created a new assistant Message and possibly Chart/Report
     // docs + bumped Usage counters - none of that came back as a mutation
@@ -234,6 +278,8 @@ function ChatPageInner() {
             <MessageList
               chatId={chatId}
               liveInvestigationId={liveInvestigationId}
+              pendingMessage={pendingMessage}
+              requestStartedAt={requestStartedAt}
               onLiveTerminal={handleLiveTerminal}
             />
             <InputBar

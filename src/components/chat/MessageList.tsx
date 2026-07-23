@@ -4,6 +4,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useGetChartQuery, useGetMessagesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
+import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
 
 function ChartThumb({ chartId }: { chartId: string }) {
@@ -35,15 +36,40 @@ function ReportThumb({ reportId }: { reportId: string }) {
 export default function MessageList({
   chatId,
   liveInvestigationId,
+  pendingMessage,
+  requestStartedAt,
   onLiveTerminal,
 }: {
   chatId: string;
   liveInvestigationId: string | null;
+  // Optimistic echo of the user's own message, shown the instant it's sent
+  // rather than waiting on the round trip - see handleSend in
+  // app/chat/page.tsx.
+  pendingMessage: string | null;
+  // Date.now() from the moment pendingMessage was set - drives the "12s"
+  // elapsed readout below and inside InvestigationTrail. Null when no
+  // request is in flight.
+  requestStartedAt: number | null;
   onLiveTerminal: () => void;
 }) {
   const { data: messages = [] } = useGetMessagesQuery(chatId);
 
-  if (messages.length === 0 && !liveInvestigationId) {
+  // handleSend (app/chat/page.tsx) sets pendingMessage immediately, then
+  // later dispatches a forceRefetch of getMessages and only clears
+  // pendingMessage once that resolves. Those are two separate state
+  // updates, so there's a render in between where `messages` already
+  // contains the real (server-confirmed) user message AND pendingMessage
+  // is still set - without this check that renders a duplicate bubble for
+  // one frame (the "added, removed, added again" flicker). Deriving
+  // showPendingBubble instead of relying on timing means the duplicate
+  // simply never renders, regardless of exactly when each state update
+  // lands.
+  const lastMessage = messages[messages.length - 1];
+  const pendingAlreadyLanded =
+    !!pendingMessage && lastMessage?.role === "user" && lastMessage.content === pendingMessage;
+  const showPendingBubble = !!pendingMessage && !pendingAlreadyLanded;
+
+  if (messages.length === 0 && !liveInvestigationId && !pendingMessage) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center text-center text-muted px-6">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-accent/20 bg-accent-soft">
@@ -96,16 +122,45 @@ export default function MessageList({
         </div>
       ))}
 
-      {liveInvestigationId && (
+      {showPendingBubble && (
+        <div className="flex justify-end">
+          <div className="max-w-2xl">
+            <p className="rounded-card border border-border px-4 py-2.5 text-base whitespace-pre-wrap opacity-70">
+              {pendingMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {liveInvestigationId ? (
         <div className="flex justify-start">
           <div className="max-w-2xl">
             <InvestigationTrail
               investigationId={liveInvestigationId}
               live
               onTerminal={onLiveTerminal}
+              startedAt={requestStartedAt}
             />
           </div>
         </div>
+      ) : (
+        pendingMessage && (
+          // The mutation hasn't resolved with an investigation_id yet, so
+          // InvestigationTrail (which needs one to open its SSE stream)
+          // can't mount - this keeps the left-side spinner unbroken from
+          // the moment the message is sent through to when it takes over.
+          <div className="flex justify-start">
+            <div className="max-w-2xl">
+              <ul className="mt-2 space-y-1.5">
+                <li className="flex items-start gap-2 text-xs text-muted">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent" />
+                  <span>Starting investigation...</span>
+                  <ElapsedTimer startedAt={requestStartedAt} className="ml-auto shrink-0 text-[11px] tabular-nums text-muted" />
+                </li>
+              </ul>
+            </div>
+          </div>
+        )
       )}
     </div>
   );

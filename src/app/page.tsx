@@ -2,6 +2,18 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import {
+  Activity,
+  BarChart3,
+  BookOpen,
+  Calculator,
+  Cog,
+  Database,
+  Layers,
+  Link2,
+  Lock,
+  Rocket,
+} from "lucide-react";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import Reveal from "@/components/Reveal";
@@ -39,31 +51,37 @@ const FEATURES = [
     title: "Isolated agents",
     body: "Specialized agents investigate independently, each confined to its own context, so noise from one line of inquiry never pollutes another.",
     color: "bg-accent",
+    icon: Layers,
   },
   {
     title: "Deterministic tools",
     body: "Agents don't free-associate numbers - every lookup runs through a deterministic tool, and the model only reasons over real results.",
     color: "bg-clay",
+    icon: Cog,
   },
   {
     title: "Full traceability",
     body: "Every finding carries a reference back to a source file, row, or page - an audit trail attached to every answer.",
     color: "bg-plum",
+    icon: Link2,
   },
   {
     title: "Charts & reports",
     body: "Ask for a dashboard or a written report and get one generated on the spot, saved to your workspace for later.",
     color: "bg-gold",
+    icon: BarChart3,
   },
   {
     title: "Private workspaces",
     body: "Files, chats, and memory are scoped to a workspace you control - nothing leaks across projects or teams.",
     color: "bg-rust",
+    icon: Lock,
   },
   {
     title: "Streamed investigations",
     body: "Watch the agents work in real time, with the option to cancel an investigation mid-flight if it's off track.",
     color: "bg-accent-dark",
+    icon: Activity,
   },
 ];
 
@@ -87,24 +105,28 @@ const PERSONAS = [
     body: "Get straight answers out of messy exports without writing a query.",
     text: "text-accent-dark",
     bar: "bg-accent-dark",
+    icon: Database,
   },
   {
     title: "Finance & analysts",
     body: "Cross-check figures and reconcile numbers across files in minutes.",
     text: "text-clay",
     bar: "bg-clay",
+    icon: Calculator,
   },
   {
     title: "Researchers",
     body: "Pull findings out of long PDFs with citations back to the exact page.",
     text: "text-plum",
     bar: "bg-plum",
+    icon: BookOpen,
   },
   {
     title: "Founders & PMs",
     body: "Skip the SQL, ask the question, get a chart you can drop in a deck.",
     text: "text-rust",
     bar: "bg-rust",
+    icon: Rocket,
   },
 ];
 
@@ -114,6 +136,109 @@ const STATS = [
   { value: "100%", label: "Claims traced to a source file", color: "text-clay" },
   { value: "4", label: "File types supported", color: "text-plum" },
   { value: "Live", label: "Streamed investigation trace", color: "text-rust" },
+];
+
+// Illustrative only - mock data purely to show the shape of what an
+// investigation can hand back (see the "Charts, generated on demand"
+// section). Hand-rolled SVG/CSS so this doesn't pull in a charting library
+// for what's essentially marketing decoration.
+function MiniBarChart() {
+  const data = [35, 62, 48, 90, 73, 55, 88];
+  const max = Math.max(...data);
+  return (
+    <div className="flex h-24 items-end gap-1.5">
+      {data.map((v, i) => (
+        <span
+          key={i}
+          className="flex-1 rounded-t-sm bg-gradient-to-t from-accent to-gold"
+          style={{ height: `${(v / max) * 100}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MiniAreaChart() {
+  const data = [20, 35, 30, 50, 45, 65, 60, 80, 75, 95];
+  const w = 200;
+  const h = 96;
+  const max = Math.max(...data);
+  const step = w / (data.length - 1);
+  const line = data.map((v, i) => `${i * step},${h - (v / max) * h}`).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-24 w-full text-plum" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="homeAreaFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#homeAreaFill)" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MiniDonutChart() {
+  const segments = [
+    { value: 42, stroke: "stroke-accent", dot: "bg-accent" },
+    { value: 28, stroke: "stroke-gold", dot: "bg-gold" },
+    { value: 18, stroke: "stroke-plum", dot: "bg-plum" },
+    { value: 12, stroke: "stroke-clay", dot: "bg-clay" },
+  ];
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  const r = 34;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+
+  return (
+    <div className="flex h-24 items-center justify-center gap-4">
+      <svg viewBox="0 0 80 80" className="h-24 w-24 -rotate-90">
+        <circle cx="40" cy="40" r={r} fill="none" strokeWidth="10" className="stroke-border" />
+        {segments.map((seg, i) => {
+          const len = (seg.value / total) * circumference;
+          const el = (
+            <circle
+              key={i}
+              cx="40"
+              cy="40"
+              r={r}
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={`${len} ${circumference - len}`}
+              strokeDashoffset={-offset}
+              className={seg.stroke}
+            />
+          );
+          offset += len;
+          return el;
+        })}
+      </svg>
+      <ul className="space-y-1.5 text-xs text-muted">
+        {segments.map((seg, i) => (
+          <li key={i} className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${seg.dot}`} />
+            {seg.value}%
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const CHARTS = [
+  { title: "Revenue by region", body: "Bar charts from a single question.", chart: MiniBarChart },
+  { title: "Trend over time", body: "Spot a trajectory at a glance.", chart: MiniAreaChart },
+  { title: "Category breakdown", body: "See how a total splits up.", chart: MiniDonutChart },
 ];
 
 function CTAButton() {
@@ -223,6 +348,33 @@ export default function HomePage() {
             ))}
           </div>
         </Reveal>
+      </section>
+
+      {/* Charts, generated on demand */}
+      <section className="px-6 py-20">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Not just an answer - a chart, when you need one
+          </h2>
+          <p className="mt-3 text-muted">
+            Ask for a breakdown and get a real visual back, saved to your
+            workspace alongside the investigation that produced it.
+          </p>
+        </Reveal>
+
+        <div className="mx-auto mt-12 grid max-w-5xl gap-5 sm:grid-cols-3">
+          {CHARTS.map((c, i) => (
+            <Reveal key={c.title} delay={i * 100}>
+              <div className="h-full rounded-card border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-[0_0_35px_-12px_rgba(204,120,92,0.4)]">
+                <c.chart />
+                <h3 className="mt-4 font-semibold">{c.title}</h3>
+                <p className="mt-1.5 text-sm text-muted leading-relaxed">
+                  {c.body}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
       {/* Product showcase */}
@@ -352,7 +504,7 @@ export default function HomePage() {
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-lg shadow-card ${card.color}`}
                     >
-                      <span className="h-2 w-2 rounded-full bg-white/90" />
+                      <card.icon className="h-4 w-4 text-white" />
                     </span>
                     <h3 className="mt-4 font-semibold">{card.title}</h3>
                     <p className="mt-2 text-sm text-muted leading-relaxed">
@@ -445,7 +597,8 @@ export default function HomePage() {
               <Reveal key={p.title} delay={i * 100}>
                 <div className="relative h-full overflow-hidden rounded-card border border-border bg-card p-6 pl-7 shadow-card transition-all hover:-translate-y-1 hover:shadow-[0_0_35px_-14px_rgba(0,0,0,0.25)]">
                   <span className={`absolute inset-y-0 left-0 w-1.5 ${p.bar}`} />
-                  <h3 className={`font-semibold ${p.text}`}>{p.title}</h3>
+                  <p.icon className={`h-5 w-5 ${p.text}`} />
+                  <h3 className={`mt-2 font-semibold ${p.text}`}>{p.title}</h3>
                   <p className="mt-2 text-sm text-muted leading-relaxed">
                     {p.body}
                   </p>

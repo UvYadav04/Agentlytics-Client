@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useGetMeQuery, useLogoutMutation } from "@/lib/api/apiSlice";
+import { useGetMeQuery } from "@/lib/api/apiSlice";
 import GoogleLoginButton from "./GoogleLoginButton";
 
 export default function Navbar() {
   const { data: user, isLoading, isFetching } = useGetMeQuery();
-  const [logout] = useLogoutMutation();
 
   const loading = isLoading || isFetching;
 
@@ -19,39 +18,24 @@ export default function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-4">
-          <Link
-            href="/architecture"
-            className="text-sm text-text hover:text-accent-dark transition-colors"
-          >
-            Architecture
-          </Link>
+          {/* Just the avatar - it's the only account affordance in the nav.
+              Clicking it goes straight to /profile, where sign out lives
+              (the only place it lives). */}
           {user && (
-            <>
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 text-sm text-text hover:text-accent-dark transition-colors"
-              >
-                {user.picture ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.picture}
-                    alt={user.name}
-                    className="h-7 w-7 rounded-full border border-border"
-                  />
-                ) : (
-                  <span className="h-7 w-7 rounded-full bg-accent-soft text-accent-dark text-xs flex items-center justify-center font-semibold">
-                    {user.name.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                Profile
-              </Link>
-              <button
-                onClick={() => logout()}
-                className="text-sm text-muted hover:text-text transition-colors"
-              >
-                Sign out
-              </button>
-            </>
+            <Link href="/profile" title="Profile" className="shrink-0 transition-transform hover:scale-105">
+              {user.picture ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="h-8 w-8 rounded-full border border-border"
+                />
+              ) : (
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-dark">
+                  {user.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </Link>
           )}
           {!user && !loading && (
             <GoogleLoginButton

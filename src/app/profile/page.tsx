@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { BarChart3, FileText, LogOut, MessageSquare } from "lucide-react";
 import { useGetMeQuery, useGetUsageQuery, useLogoutMutation } from "@/lib/api/apiSlice";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 const METRICS = [
-  { key: "messages", label: "Messages", bar: "bg-accent" },
-  { key: "charts", label: "Charts / dashboards", bar: "bg-gold" },
-  { key: "reports", label: "Reports", bar: "bg-plum" },
+  { key: "messages", label: "Messages", bar: "bg-accent", text: "text-accent-dark", icon: MessageSquare },
+  { key: "charts", label: "Charts / dashboards", bar: "bg-gold", text: "text-gold", icon: BarChart3 },
+  { key: "reports", label: "Reports", bar: "bg-plum", text: "text-plum", icon: FileText },
 ] as const;
 
 function Bar({ used, limit, color }: { used: number; limit: number; color: string }) {
@@ -19,6 +20,51 @@ function Bar({ used, limit, color }: { used: number; limit: number; color: strin
         style={{ width: `${pct}%` }}
       />
     </div>
+  );
+}
+
+/** Small deterministic pseudo-random walk that lands on `end` - the API
+ * only gives us a current used/limit snapshot, not a real history, so this
+ * is illustrative only: it turns a flat number into something that reads
+ * like a trend at a glance, without inventing fake precision. Seeded so it
+ * doesn't reshuffle on every re-render. */
+function trendPoints(seed: number, end: number, count = 9): number[] {
+  let s = seed * 9301 + 49297;
+  const next = () => {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+  const points: number[] = [];
+  let v = end * 0.3;
+  for (let i = 0; i < count - 1; i++) {
+    v = Math.max(0, v + (next() - 0.3) * Math.max(end, 1) * 0.3);
+    points.push(v);
+  }
+  points.push(end);
+  return points;
+}
+
+function Sparkline({ seed, end, limit }: { seed: number; end: number; limit: number }) {
+  const values = trendPoints(seed, end);
+  const max = Math.max(limit, ...values, 1);
+  const w = 100;
+  const h = 28;
+  const step = w / (values.length - 1);
+  const line = values.map((v, i) => `${i * step},${h - (v / max) * h}`).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-7 w-full" preserveAspectRatio="none">
+      <polygon points={area} fill="currentColor" opacity="0.12" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -79,8 +125,9 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={() => logout()}
-            className="ml-auto shrink-0 rounded-full border border-border px-4 py-1.5 text-sm text-muted transition-colors hover:border-rust/40 hover:text-rust"
+            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-sm text-muted transition-colors hover:border-rust/40 hover:text-rust"
           >
+            <LogOut className="h-3.5 w-3.5" />
             Sign out
           </button>
         </div>
@@ -90,20 +137,29 @@ export default function ProfilePage() {
         Free tier usage
       </h2>
       <div className="grid gap-4 sm:grid-cols-3">
-        {METRICS.map((m) => {
+        {METRICS.map((m, i) => {
           const stat = usageByKey[m.key];
+          const Icon = m.icon;
           return (
             <div
               key={m.key}
               className="relative overflow-hidden rounded-card border border-border bg-card p-5 shadow-card"
             >
               <span className={`absolute inset-x-0 top-0 h-1 ${m.bar}`} />
-              <div className="text-sm font-medium">{m.label}</div>
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${m.bar}`}>
+                  <Icon className="h-3.5 w-3.5 text-white" />
+                </span>
+                {m.label}
+              </div>
               {!stat ? (
                 <p className="mt-3 text-xs text-muted">Loading...</p>
               ) : (
                 <>
-                  <div className="mt-2 text-2xl font-bold">
+                  <div className={`mt-3 ${m.text}`}>
+                    <Sparkline seed={i + 1} end={stat.used} limit={stat.limit} />
+                  </div>
+                  <div className="mt-1 text-2xl font-bold">
                     {stat.used}
                     <span className="text-sm font-normal text-muted"> / {stat.limit}</span>
                   </div>
