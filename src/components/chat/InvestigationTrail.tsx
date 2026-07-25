@@ -32,23 +32,31 @@ export default function InvestigationTrail({
   });
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
 
+  if(!live)
+    return null
+
   return (
-    <ul className="mt-2 space-y-1.5">
-      <li className="flex items-start gap-2 text-xs text-muted">
+    <ul className="mt-2 space-y-1.5 ">
+          {live &&
+        <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
+           <h3 className="shrink-0 text-[11px] tabular-nums text-muted">working for </h3><ElapsedTimer startedAt={startedAt} className="shrink-0 text-[11px] tabular-nums text-muted" />
+          </li> 
+}
+          
+          <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
         <span
-          className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent ${
+          className={`size-[7px] shrink-0 rounded-full bg-accent ${
             live && steps.length === 0 ? "animate-pulse" : ""
           }`}
         />
-        <span>Connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
-        {live && <ElapsedTimer startedAt={startedAt} className="ml-auto shrink-0 text-[11px] tabular-nums text-muted" />}
+        <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
       </li>
       {steps.map((e, i) => (
-        <li key={i} className="flex items-start gap-2 text-xs text-muted">
+        <li key={i} className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
           <span
-            className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${TYPE_COLOR[e.type] || "bg-border"}`}
+            className={` size-[7px] shrink-0 rounded-full ${TYPE_COLOR[e.type] || "bg-border"}`}
           />
-          <span>{e.message}</span>
+          <span className="mb-[2px]">{e.message}</span>
         </li>
       ))}
     </ul>

@@ -119,6 +119,10 @@ function ChatPageInner() {
     setChatId(null);
     setLiveInvestigationId(null);
     setRequestStartedAt(null);
+    // Otherwise a message sent right before switching away would still be
+    // "pending" when MessageList mounts for whatever's selected next, and
+    // its optimistic-echo effect would append that stale text there instead.
+    setPendingMessage(null);
   }
 
   function selectChat(id: string | null) {
@@ -126,6 +130,7 @@ function ChatPageInner() {
     setLiveInvestigationId(null);
     setLimitMessage(null);
     setRequestStartedAt(null);
+    setPendingMessage(null);
   }
 
   async function handleSend(content: string, fileIds: string[]) {

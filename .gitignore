@@ -1,4 +1,38 @@
+# Dependencies
 /node_modules
-.next
+/.pnp
+.pnp.js
 
+# Next.js build output
+/.next/
+/out/
+
+# Production build info
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing / coverage
+/coverage
+
+# Env - NEXT_PUBLIC_* values ship via Dockerfile build args (see
+# docker-compose.yml's client.build.args), never by committing a real env
+# file. .env.local.example stays tracked as the template to copy from.
 .env
+.env*.local
+.env.production
+!.env.local.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor / OS cruft
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Vercel (unused here, but harmless to keep out if anyone links the project)
+.vercel
