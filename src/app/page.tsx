@@ -292,18 +292,18 @@ export default function HomePage() {
             No answer without evidence traced to a real file
           </div>
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-tight">
-            Ask questions about your data.
+            Talk to your data files.
             <br />
             Get answers you can{" "}
             <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
-              actually trust.
+              put your name on.
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-muted text-lg">
-            Upload CSVs, spreadsheets, and PDFs into a private workspace. A
-            team of specialized agents investigates your data and returns
-            answers, charts, and reports - every claim traced back to the
-            file it came from.
+            Drop a spreadsheet, a contract, or a stack of PDFs into a private
+            workspace. A crew of specialized agents reads through it,
+            cross-checks its own numbers, and hands back an answer - with the
+            exact file, row, or page it came from attached.
           </p>
 
           <div className="mt-10 flex items-center justify-center gap-4">
@@ -315,7 +315,7 @@ export default function HomePage() {
             {FILE_TYPES.map((t) => (
               <span
                 key={t}
-                className="rounded-full border border-border bg-card px-3 py-1 font-medium text-text"
+                className="animate-chip-drift rounded-full border border-border bg-card px-3 py-1 font-medium text-text"
               >
                 {t}
               </span>
@@ -504,7 +504,7 @@ export default function HomePage() {
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-lg shadow-card ${card.color}`}
                     >
-                      <card.icon className="h-4 w-4 text-white" />
+                      <card.icon className="h-4 w-4 animate-icon-breathe text-white" />
                     </span>
                     <h3 className="mt-4 font-semibold">{card.title}</h3>
                     <p className="mt-2 text-sm text-muted leading-relaxed">
@@ -670,8 +670,8 @@ export default function HomePage() {
               <h4 className="text-sm font-semibold">Built on</h4>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li>
-                  <Link href="/architecture" className="hover:text-text transition-colors">
-                    Architecture
+                  <Link href="/about" className="hover:text-text transition-colors">
+                    About
                   </Link>
                 </li>
                 <li>Isolated, specialized investigation agents</li>

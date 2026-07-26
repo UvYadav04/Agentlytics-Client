@@ -6,7 +6,8 @@ import CanvasCursor from "@/components/cursor/CanvasCursor";
 
 export const metadata: Metadata = {
   title: "Agentlytics",
-  description: "Ask questions about your data, backed by real evidence.",
+  description:
+    "Talk to your data files and get answers backed by real evidence - every claim traced back to the file it came from.",
 };
 
 export default function RootLayout({

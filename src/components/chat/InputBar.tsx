@@ -188,7 +188,7 @@ export default function InputBar({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Ask a question about your data... (@ to reference a file)"
+          placeholder="Talk to your files... (@ to reference one)"
           className="flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted"
         />
         {busy ? (

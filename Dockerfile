@@ -25,7 +25,7 @@ WORKDIR /app
 # include rather than debugging a missing .so only on some machines.
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm i
 
 FROM node:20-alpine AS builder
 WORKDIR /app

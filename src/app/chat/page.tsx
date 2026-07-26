@@ -9,6 +9,7 @@ import {
   // useGetActiveInvestigationQuery, - unused now that auto-reconnect below is disabled
   useGetChatsQuery,
   useGetMeQuery,
+  useGetMessagesQuery,
   useGetWorkspacesQuery,
   useSendMessageMutation,
 } from "@/lib/api/apiSlice";
@@ -20,6 +21,7 @@ import ChatsPanel from "@/components/chat/ChatsPanel";
 import MessageList from "@/components/chat/MessageList";
 import InputBar from "@/components/chat/InputBar";
 import ChatLanding from "@/components/chat/ChatLanding";
+import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
 
 export default function ChatPage() {
@@ -67,7 +69,7 @@ function ChatPageInner() {
   // Accordion state for the left (Files/Chats) and right (Dashboards/Charts)
   // sidebars - only one section per side is open at a time, and both can be
   // collapsed to null.
-  const [leftSection, setLeftSection] = useState<"files" | "chats" | null>(null);
+  const [leftSection, setLeftSection] = useState<"files" | "chats" | null>("chats");
   const [rightSection, setRightSection] = useState<RightSection>(null);
 
   const dispatch = useAppDispatch();
@@ -113,6 +115,18 @@ function ChatPageInner() {
   // ChatsPanel's identical query, so it's not an extra network request.
   const { data: chats = [] } = useGetChatsQuery(workspaceId ?? "", { skip: !workspaceId });
   const activeChatTitle = chats.find((c) => c.id === chatId)?.title;
+
+  // Same query args MessageList uses below - RTK Query dedupes this against
+  // its identical call, so checking "does this chat have any messages yet"
+  // up here doesn't cost an extra request. Drives which composer renders:
+  // the big centered one pre-first-message, or the compact docked one once
+  // there's a thread to scroll through.
+  const { data: chatMessages = [], isLoading: messagesLoading } = useGetMessagesQuery(
+    chatId ?? "",
+    { skip: !chatId }
+  );
+  const showEmptyComposer =
+    !!chatId && !messagesLoading && chatMessages.length === 0 && !liveInvestigationId && !pendingMessage;
 
   function selectWorkspace(id: string) {
     setWorkspaceId(id);
@@ -278,7 +292,17 @@ function ChatPageInner() {
           </div>
         )}
 
-        {chatId ? (
+        {chatId && messagesLoading ? (
+          <div className="flex flex-1 items-center justify-center text-sm text-muted">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
+            <span className="ml-2">Loading...</span>
+          </div>
+        ) : chatId && showEmptyComposer ? (
+          <EmptyChatComposer
+            submitting={!!pendingMessage}
+            onSubmit={(content) => handleSend(content, [])}
+          />
+        ) : chatId ? (
           <>
             <MessageList
               chatId={chatId}

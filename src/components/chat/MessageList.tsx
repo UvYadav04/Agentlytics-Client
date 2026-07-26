@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -52,6 +52,56 @@ export default function MessageList({
 
   const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>(messages);
 
+  // Scroll container + the content wrapper inside it. Kept separate so a
+  // ResizeObserver can watch the *content* grow (new messages, or the live
+  // investigation trail streaming in) without a plain overflow container
+  // ever reporting a size change of its own.
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  // Whether we should keep pinning to the bottom as content grows - turned
+  // off the moment the user scrolls up to read something earlier, so a
+  // streaming answer doesn't yank them back down.
+  const stickToBottomRef = useRef(true);
+
+  function scrollToBottom() {
+    const el = outerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    function onScroll() {
+      if (!el) return;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      stickToBottomRef.current = distanceFromBottom < 64;
+    }
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Opening or switching chats should land directly on the last message -
+  // no smooth-scroll animation, it should just already be in view.
+  useLayoutEffect(() => {
+    stickToBottomRef.current = true;
+    scrollToBottom();
+  }, [chatId]);
+
+  useLayoutEffect(() => {
+    if (stickToBottomRef.current) scrollToBottom();
+  });
+
+  useEffect(() => {
+    const inner = innerRef.current;
+    if (!inner) return;
+    const observer = new ResizeObserver(() => {
+      if (stickToBottomRef.current) scrollToBottom();
+    });
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!pendingMessage) {
       setDisplayMessages(messages);
@@ -79,6 +129,9 @@ export default function MessageList({
     ]);
   }, [messages, pendingMessage, chatId]);
 
+  // Normally the parent page swaps this whole component out for
+  // EmptyChatComposer while there are zero messages - this is just a
+  // defensive fallback (e.g. mid-refetch) so it never renders a blank pane.
   if (displayMessages.length === 0 && !liveInvestigationId && !pendingMessage) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center text-center text-muted px-6">
@@ -86,14 +139,15 @@ export default function MessageList({
           <span className="h-3 w-3 rounded-full bg-accent" />
         </div>
         <p className="text-sm max-w-sm">
-          Upload a file, get files ready and analyze your data.
+          Upload a file, then ask it something real.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-bg px-6 py-6 space-y-5">
+    <div ref={outerRef} className="flex-1 overflow-y-auto bg-bg px-6 py-6">
+      <div ref={innerRef} className="space-y-5">
       {displayMessages.map((m) => (
         <div
           key={m.id}
@@ -157,6 +211,7 @@ export default function MessageList({
           </div>
         )
       )}
+      </div>
     </div>
   );
 }

@@ -148,6 +148,68 @@ body {
   animation: float-c 15s ease-in-out infinite;
 }
 
+/* Small continuous drift used on hero/feature chips so the page feels alive
+   even before the user scrolls - deliberately subtler than the glow-blob
+   float above. Stagger via nth-child so a row of chips doesn't move in
+   lockstep. No JS/library involved, just CSS. */
+@keyframes chip-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.animate-chip-drift {
+  animation: chip-drift 3.2s ease-in-out infinite;
+}
+.animate-chip-drift:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.animate-chip-drift:nth-child(3) {
+  animation-delay: 0.6s;
+}
+.animate-chip-drift:nth-child(4) {
+  animation-delay: 0.9s;
+}
+
+/* Breathing pulse for icon badges - a "motion icon" effect without any
+   animation library. Applied at low amplitude so it reads as alive, not
+   distracting. */
+@keyframes icon-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+.animate-icon-breathe {
+  animation: icon-breathe 2.8s ease-in-out infinite;
+}
+
+/* Marching-ants connector used on the About page to suggest data flowing
+   from one pipeline stage to the next. */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.animate-flow-dash {
+  stroke-dasharray: 6 6;
+  animation: flow-dash 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-chip-drift,
+  .animate-icon-breathe,
+  .animate-flow-dash {
+    animation: none;
+  }
+}
+
 /* Faint blueprint-style graph paper backdrop - used behind the architecture
    page's slides. Neutral (text-color-based) tint, not a color from the
    palette, so it reads as "technical paper" rather than a brand surface. */

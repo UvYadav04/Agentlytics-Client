@@ -11,13 +11,20 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
+      <div className="flex w-full items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <span className="inline-block h-6 w-6 rounded-md bg-accent" />
           <span className="font-semibold tracking-tight">Agentlytics</span>
         </Link>
 
         <nav className="flex items-center gap-4">
+          <Link
+            href="/about"
+            className="hidden text-sm font-medium text-muted transition-colors hover:text-accent-dark sm:inline"
+          >
+            About
+          </Link>
+
           {/* Just the avatar - it's the only account affordance in the nav.
               Clicking it goes straight to /profile, where sign out lives
               (the only place it lives). */}
