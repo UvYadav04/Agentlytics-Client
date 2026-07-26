@@ -23,11 +23,9 @@ jobs:
             --password-stdin
 
       - name: Build Client Image
-        working-directory: client
         run: docker compose build client
 
       - name: Push Client Image
-        working-directory: client
         run: docker compose push client
 
       - name: Deploy to EC2
