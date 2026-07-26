@@ -29,9 +29,9 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
-    image: ${DOCKERHUB_USERNAME:-CHANGEME}/data-analyzer-client:${IMAGE_TAG:-latest}
+    image: itzdineshyadav/data-analyzer:client
     container_name: data-analyzer-client
     restart: unless-stopped
     ports:
