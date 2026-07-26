@@ -1,0 +1,42 @@
+name: Deploy Client
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "client/**"
+      - ".github/workflows/deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login \
+            --username "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
+
+      - name: Build Client Image
+        working-directory: client
+        run: docker compose build client
+
+      - name: Push Client Image
+        working-directory: client
+        run: docker compose push client
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/data-analyzer/scripts
+            chmod +x deploy-client.sh
+            ./deploy-client.sh
