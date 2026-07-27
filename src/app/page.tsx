@@ -5,17 +5,20 @@ import { useRef } from "react";
 import {
   Activity,
   BarChart3,
+  Bot,
   BookOpen,
   Calculator,
+  CheckCircle2,
   Cog,
   Database,
+  FileSearch,
   Layers,
   Link2,
   Lock,
   Rocket,
+  Sparkles,
 } from "lucide-react";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
-import GoogleLoginButton from "@/components/GoogleLoginButton";
 import Reveal from "@/components/Reveal";
 import SpotlightCursor from "@/components/cursor/SpotlightCursor";
 
@@ -241,6 +244,9 @@ const CHARTS = [
   { title: "Category breakdown", body: "See how a total splits up.", chart: MiniDonutChart },
 ];
 
+// Logged-in users get a straight line into the product. Logged-out visitors
+// go to /get-started first - a page that sells the product - rather than
+// being dropped straight into the Google auth popup off the hero.
 function CTAButton() {
   const { data: user, isLoading: loading } = useGetMeQuery();
   if (loading) return null;
@@ -255,10 +261,83 @@ function CTAButton() {
     );
   }
   return (
-    <GoogleLoginButton
-      label="Get started"
+    <Link
+      href="/get-started"
       className="rounded-full bg-accent px-6 py-3 text-white font-medium shadow-card transition-all hover:bg-accent-dark hover:shadow-[0_0_40px_-8px_rgba(204,120,92,0.6)]"
-    />
+    >
+      Get started
+    </Link>
+  );
+}
+
+// Right-hand side of the hero - a compact visual of what "agents working
+// behind the scenes" actually looks like: a live investigation panel with
+// pulsing agent rows, plus two floating badges (a generated chart, a
+// verified answer) to sell "charts" and "traceability" without more copy.
+function HeroIllustration() {
+  const agentRows = [
+    { icon: FileSearch, label: "Reading sales.parquet", tone: "text-accent-dark" },
+    { icon: Bot, label: "Agent cross-checking totals", tone: "text-plum" },
+    { icon: Sparkles, label: "Drafting the answer", tone: "text-gold" },
+  ];
+
+  return (
+    <div className="relative mx-auto w-full max-w-md lg:mx-0">
+      <div className="glow-blob animate-float-b -top-10 right-0 h-56 w-56 bg-plum opacity-30" />
+
+      {/* Main panel: agents visibly at work */}
+      <div className="relative z-10 overflow-hidden rounded-card border border-accent/15 bg-card shadow-[0_20px_60px_-20px_rgba(204,120,92,0.35)]">
+        <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-rust/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-gold/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-plum/70" />
+          <span className="ml-3 flex items-center gap-1.5 text-xs text-muted">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            Investigating live
+          </span>
+        </div>
+
+        <div className="space-y-3 p-5">
+          {agentRows.map((row) => (
+            <div
+              key={row.label}
+              className="flex items-center gap-3 rounded-lg border border-border bg-bg px-3 py-2.5"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card shadow-card">
+                <row.icon className={`h-4 w-4 animate-icon-breathe ${row.tone}`} strokeWidth={1.75} />
+              </span>
+              <span className="text-xs font-medium text-text">{row.label}</span>
+            </div>
+          ))}
+
+          <div className="pt-1">
+            <MiniBarChart />
+          </div>
+        </div>
+      </div>
+
+      {/* Floating badge: a chart got generated */}
+      <div className="absolute -right-6 -top-6 z-20 hidden items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card sm:flex">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold shadow-card">
+          <BarChart3 className="h-4 w-4 text-white" />
+        </span>
+        <div className="leading-tight">
+          <div className="text-xs font-semibold">Chart generated</div>
+          <div className="text-[11px] text-muted">Revenue by region</div>
+        </div>
+      </div>
+
+      {/* Floating badge: the answer is traceable */}
+      <div className="absolute -bottom-6 -left-4 z-20 flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent shadow-card">
+          <CheckCircle2 className="h-4 w-4 text-white" />
+        </span>
+        <div className="leading-tight">
+          <div className="text-xs font-semibold">Answer verified</div>
+          <div className="text-[11px] text-muted">sales.parquet - row 118</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -267,10 +346,11 @@ export default function HomePage() {
 
   return (
     <main>
-      {/* Hero */}
+      {/* Hero - two columns: the pitch on the left, a live look at the
+          agents working behind the scenes on the right. */}
       <section
         ref={heroRef}
-        className="relative flex min-h-[92vh] flex-col items-center justify-center overflow-hidden px-6 text-center"
+        className="relative flex min-h-[88vh] flex-col justify-center overflow-hidden px-6 py-16"
       >
         <div className="glow-blob animate-float-a -top-24 -left-24 h-96 w-96 bg-accent" />
         <div className="glow-blob animate-float-b top-32 -right-20 h-80 w-80 bg-gold" />
@@ -286,52 +366,47 @@ export default function HomePage() {
           }}
         />
 
-        <div className="relative z-20 mx-auto max-w-4xl">
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs text-muted shadow-card backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            No answer without evidence traced to a real file
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-tight">
-            Talk to your data files.
-            <br />
-            Get answers you can{" "}
-            <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
-              put your name on.
-            </span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-muted text-lg">
-            Drop a spreadsheet, a contract, or a stack of PDFs into a private
-            workspace. A crew of specialized agents reads through it,
-            cross-checks its own numbers, and hands back an answer - with the
-            exact file, row, or page it came from attached.
-          </p>
-
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <CTAButton />
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-muted">
-            <span>Works with</span>
-            {FILE_TYPES.map((t) => (
-              <span
-                key={t}
-                className="animate-chip-drift rounded-full border border-border bg-card px-3 py-1 font-medium text-text"
-              >
-                {t}
+        <div className="relative z-20 mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2 lg:gap-10">
+          {/* Left: the pitch */}
+          <div className="text-center lg:text-left">
+            <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs text-muted shadow-card backdrop-blur lg:mx-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              No answer without evidence traced to a real file
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-tight">
+              Talk to your data files.
+              <br />
+              Get answers you can{" "}
+              <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
+                put your name on.
               </span>
-            ))}
-          </div>
-        </div>
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-muted text-sm sm:text-base lg:mx-0">
+              Drop a spreadsheet, a contract, or a stack of PDFs into a
+              private workspace and get an answer traced back to the exact
+              file, row, or page it came from.
+            </p>
 
-        <a
-          href="#product"
-          className="absolute z-20 bottom-8 flex flex-col items-center gap-2 text-xs text-muted transition-colors hover:text-accent-dark"
-        >
-          Scroll to explore
-          <span className="flex h-8 w-5 items-start justify-center rounded-full border border-border p-1">
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
-          </span>
-        </a>
+            <div className="mt-7 flex items-center justify-center gap-4 lg:justify-start">
+              <CTAButton />
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 text-xs text-muted lg:justify-start">
+              <span>Works with</span>
+              {FILE_TYPES.map((t) => (
+                <span
+                  key={t}
+                  className="animate-chip-drift rounded-full border border-border bg-card px-3 py-1 font-medium text-text"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: agents working behind the scenes */}
+          <HeroIllustration />
+        </div>
       </section>
 
       {/* Stats strip */}

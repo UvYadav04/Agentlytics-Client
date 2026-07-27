@@ -306,6 +306,7 @@ function ChatPageInner() {
           <>
             <MessageList
               chatId={chatId}
+              workspaceId={workspaceId}
               liveInvestigationId={liveInvestigationId}
               pendingMessage={pendingMessage}
               requestStartedAt={requestStartedAt}

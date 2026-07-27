@@ -4,10 +4,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useGetChartQuery, useGetMessagesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
+import { FileText } from "lucide-react";
+import { useGetChartQuery, useGetFilesQuery, useGetMessagesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
 import type { ChatMessage } from "@/lib/types";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
+import MarkdownTable from "./MarkdownTable";
+
+const MARKDOWN_COMPONENTS = { table: MarkdownTable };
 
 function ChartThumb({ chartId }: { chartId: string }) {
   const { data: chart } = useGetChartQuery(chartId);
@@ -35,14 +39,44 @@ function ReportThumb({ reportId }: { reportId: string }) {
   );
 }
 
+// "These files were used for this" - a quiet, non-clickable readout of which workspace files
+// this specific answer was actually based on (Message.files_used, straight off
+// OrchestratorResult.files_used server-side - see FinalResultCollector). Resolves filenames
+// against the same getFiles cache FilesPanel/InputBar already populate for this workspace, so
+// this never costs an extra request.
+function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: string[] }) {
+  const { data: files = [] } = useGetFilesQuery(workspaceId);
+  if (fileIds.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
+      <FileText className="h-3 w-3 shrink-0" />
+      <span>Used:</span>
+      {fileIds.map((id) => {
+        const file = files.find((f) => f.id === id);
+        return (
+          <span
+            key={id}
+            className="rounded-full border border-border bg-bg px-2 py-0.5 font-medium text-text"
+          >
+            {file?.filename || id}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function MessageList({
   chatId,
+  workspaceId,
   liveInvestigationId,
   pendingMessage,
   requestStartedAt,
   onLiveTerminal,
 }: {
   chatId: string;
+  workspaceId: string | null;
   liveInvestigationId: string | null;
   pendingMessage: string | null;
   requestStartedAt: number | null;
@@ -124,6 +158,7 @@ export default function MessageList({
         investigation_id: null,
         chart_ids: [],
         report_id: null,
+        files_used: [],
         created_at: new Date().toISOString(),
       },
     ]);
@@ -160,7 +195,7 @@ export default function MessageList({
 
             {m.role === "assistant" ? (
               <div className={`markdown text-base ${m.investigation_id ? "mt-3" : ""}`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
                   {m.content}
                 </ReactMarkdown>
               </div>
@@ -168,6 +203,10 @@ export default function MessageList({
               <p className="rounded-card border border-border px-4 py-2.5 text-base whitespace-pre-wrap">
                 {m.content}
               </p>
+            )}
+
+            {m.role === "assistant" && workspaceId && m.files_used.length > 0 && (
+              <FilesUsedRow workspaceId={workspaceId} fileIds={m.files_used} />
             )}
 
             {(m.chart_ids.length > 0 || m.report_id) && (

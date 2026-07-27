@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
-import GoogleLoginButton from "./GoogleLoginButton";
+
+// These auth pages render their own full-screen two-column layout (see AuthLayout.tsx) with
+// their own wordmark - the global navbar would just add a redundant bar above it and eat into
+// the "fits in one screen, no scrolling" auth layout.
+const HIDDEN_ON = ["/login", "/signup", "/forgot-password"];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { data: user, isLoading, isFetching } = useGetMeQuery();
 
   const loading = isLoading || isFetching;
+
+  if (HIDDEN_ON.includes(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur">
@@ -19,15 +27,31 @@ export default function Navbar() {
 
         <nav className="flex items-center gap-4">
           <Link
+            href="/"
+            className="hidden text-sm font-medium text-muted transition-colors hover:text-accent-dark sm:inline"
+          >
+            Home
+          </Link>
+          <Link
             href="/about"
             className="hidden text-sm font-medium text-muted transition-colors hover:text-accent-dark sm:inline"
           >
             About
           </Link>
 
-          {/* Just the avatar - it's the only account affordance in the nav.
-              Clicking it goes straight to /profile, where sign out lives
-              (the only place it lives). */}
+          {/* Only shown once we know the user is signed in - the one-click
+              path into the product from anywhere in the app. */}
+          {user && (
+            <Link
+              href="/chat"
+              className="hidden rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-white shadow-card transition-colors hover:bg-accent-dark sm:inline-block"
+            >
+              My Workspace
+            </Link>
+          )}
+
+          {/* Avatar - clicking it goes straight to /profile, where sign out
+              lives (the only place it lives). */}
           {user && (
             <Link href="/profile" title="Profile" className="shrink-0 transition-transform hover:scale-105">
               {user.picture ? (
@@ -45,10 +69,12 @@ export default function Navbar() {
             </Link>
           )}
           {!user && !loading && (
-            <GoogleLoginButton
-              label="Log in"
+            <Link
+              href="/login"
               className="rounded-full border border-border px-4 py-1.5 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent-dark"
-            />
+            >
+              Log in
+            </Link>
           )}
         </nav>
       </div>

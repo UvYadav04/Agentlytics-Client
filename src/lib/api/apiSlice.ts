@@ -45,6 +45,23 @@ export type PresignResult = {
   storage_key: string;
 };
 
+export type MessageResult = { message: string };
+
+export type SignupBody = {
+  name: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+};
+
+export type LoginBody = { email: string; password: string };
+
+export type ChangePasswordBody = {
+  current_password?: string;
+  new_password: string;
+  confirm_new_password: string;
+};
+
 /**
  * Single RTK Query API slice for the whole app. Cache invalidation is
  * modeled with tags scoped per-parent (e.g. `{type: "File", id: "LIST-<workspaceId>"}`)
@@ -88,6 +105,26 @@ export const api = createApi({
         method: "POST",
         body: { id_token: idToken },
       }),
+      invalidatesTags: ["User"],
+    }),
+    signup: builder.mutation<MessageResult, SignupBody>({
+      query: (body) => ({ url: "/auth/signup", method: "POST", body }),
+    }),
+    login: builder.mutation<User, LoginBody>({
+      query: (body) => ({ url: "/auth/login", method: "POST", body }),
+      invalidatesTags: ["User"],
+    }),
+    verifyEmail: builder.query<MessageResult, string>({
+      query: (token) => `/auth/verify-email?token=${encodeURIComponent(token)}`,
+    }),
+    resendVerification: builder.mutation<MessageResult, string>({
+      query: (email) => ({ url: "/auth/resend-verification", method: "POST", body: { email } }),
+    }),
+    forgotPassword: builder.mutation<MessageResult, string>({
+      query: (email) => ({ url: "/auth/forgot-password", method: "POST", body: { email } }),
+    }),
+    changePassword: builder.mutation<MessageResult, ChangePasswordBody>({
+      query: (body) => ({ url: "/auth/change-password", method: "POST", body }),
       invalidatesTags: ["User"],
     }),
     logout: builder.mutation<{ ok: boolean }, void>({
@@ -329,6 +366,12 @@ export const api = createApi({
 export const {
   useGetMeQuery,
   useGoogleLoginMutation,
+  useSignupMutation,
+  useLoginMutation,
+  useLazyVerifyEmailQuery,
+  useResendVerificationMutation,
+  useForgotPasswordMutation,
+  useChangePasswordMutation,
   useLogoutMutation,
   useGetWorkspacesQuery,
   useCreateWorkspaceMutation,

@@ -3,6 +3,8 @@ export type User = {
   email: string;
   name: string;
   picture: string | null;
+  email_verified: boolean;
+  has_password: boolean;
 };
 
 export type Workspace = {
@@ -46,6 +48,7 @@ export type ChatMessage = {
   investigation_id: string | null;
   chart_ids: string[];
   report_id: string | null;
+  files_used: string[];
   created_at: string;
 };
 

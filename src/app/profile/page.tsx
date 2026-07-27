@@ -1,9 +1,136 @@
 "use client";
 
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { BarChart3, FileText, LogOut, MessageSquare } from "lucide-react";
-import { useGetMeQuery, useGetUsageQuery, useLogoutMutation } from "@/lib/api/apiSlice";
-import GoogleLoginButton from "@/components/GoogleLoginButton";
+import { BarChart3, FileText, KeyRound, LogOut, MessageSquare, ShieldCheck } from "lucide-react";
+import { useChangePasswordMutation, useGetMeQuery, useGetUsageQuery, useLogoutMutation } from "@/lib/api/apiSlice";
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { data?: unknown } | undefined)?.data as
+    | { detail?: string | { msg?: string }[] }
+    | undefined;
+  if (typeof data?.detail === "string") return data.detail;
+  if (Array.isArray(data?.detail) && data.detail[0]?.msg) return data.detail[0].msg as string;
+  return fallback;
+}
+
+// hasPassword=false means a Google-only account - no current_password field/check makes sense
+// yet (see api_service/routers/auth.py's change_password), and the copy/button reflect "set"
+// rather than "change" since there's nothing to change from.
+function ChangePasswordCard({ hasPassword }: { hasPassword: boolean }) {
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    try {
+      await changePassword({
+        current_password: hasPassword ? currentPassword : undefined,
+        new_password: newPassword,
+        confirm_new_password: confirmPassword,
+      }).unwrap();
+      setSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(extractErrorMessage(err, "Something went wrong. Try again."));
+    }
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-card border border-border bg-card p-6 shadow-card">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent">
+          <KeyRound className="h-3.5 w-3.5 text-white" />
+        </span>
+        {hasPassword ? "Change password" : "Set a password"}
+      </div>
+      {!hasPassword && (
+        <p className="mt-2 text-xs text-muted">
+          Your account currently only signs in with Google - set a password to also log in with
+          email.
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        {error && (
+          <div className="rounded-lg border border-rust/30 bg-rust/5 px-3 py-2 text-xs text-rust">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="rounded-lg border border-accent/30 bg-accent-soft/50 px-3 py-2 text-xs text-accent-dark">
+            Password updated.
+          </div>
+        )}
+
+        {hasPassword && (
+          <div>
+            <label htmlFor="current_password" className="text-xs font-medium text-muted">
+              Current password
+            </label>
+            <input
+              id="current_password"
+              type="password"
+              required
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </div>
+        )}
+        <div>
+          <label htmlFor="new_password" className="text-xs font-medium text-muted">
+            New password
+          </label>
+          <input
+            id="new_password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </div>
+        <div>
+          <label htmlFor="confirm_new_password" className="text-xs font-medium text-muted">
+            Confirm new password
+          </label>
+          <input
+            id="confirm_new_password"
+            type="password"
+            required
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-card transition-colors hover:bg-accent-dark disabled:opacity-60"
+        >
+          {isLoading ? "Saving..." : hasPassword ? "Update password" : "Set password"}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 const METRICS = [
   { key: "messages", label: "Messages", bar: "bg-accent", text: "text-accent-dark", icon: MessageSquare },
@@ -79,7 +206,12 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24">
         <p className="text-muted">Sign in to view your profile.</p>
-        <GoogleLoginButton label="Log in" />
+        <Link
+          href="/login"
+          className="rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-white shadow-card transition-colors hover:bg-accent-dark"
+        >
+          Log in
+        </Link>
       </div>
     );
   }
@@ -121,7 +253,15 @@ export default function ProfilePage() {
           )}
           <div className="min-w-0">
             <div className="truncate text-lg font-semibold">{user.name}</div>
-            <div className="truncate text-sm text-muted">{user.email}</div>
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-sm text-muted">{user.email}</span>
+              {user.email_verified && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-dark">
+                  <ShieldCheck className="h-3 w-3" />
+                  Verified
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={() => logout()}
@@ -131,6 +271,10 @@ export default function ProfilePage() {
             Sign out
           </button>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <ChangePasswordCard hasPassword={user.has_password} />
       </div>
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
