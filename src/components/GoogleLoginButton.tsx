@@ -89,7 +89,7 @@ export default function GoogleLoginButton({
         strategy="afterInteractive"
         onLoad={initialize}
       />
-      <span className="relative inline-flex">
+      <span className="relative inline-flex w-full rounded-full ">
         <button type="button" tabIndex={-1} aria-hidden="true" className={className}>
           {label}
         </button>

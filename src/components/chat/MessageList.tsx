@@ -10,8 +10,9 @@ import type { ChatMessage } from "@/lib/types";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
 import MarkdownTable from "./MarkdownTable";
+import type { Components } from "react-markdown";
 
-const MARKDOWN_COMPONENTS = { table: MarkdownTable };
+const MARKDOWN_COMPONENTS: Components = { table: MarkdownTable };
 
 function ChartThumb({ chartId }: { chartId: string }) {
   const { data: chart } = useGetChartQuery(chartId);

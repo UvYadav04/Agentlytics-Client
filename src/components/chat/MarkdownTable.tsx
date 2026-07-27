@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
-
+import type { Components } from "react-markdown";
 // react-markdown (v9, unified/rehype under the hood) hands every custom component its
 // underlying hast node via the `node` prop - a plain, well-defined tree (table > [thead,
 // tbody] > tr > [th|td] > text), regardless of how react-markdown itself renders children.
@@ -86,6 +86,15 @@ function TableModal({
   );
 }
 
+import type { ExtraProps } from "react-markdown";
+import type { TableHTMLAttributes } from "react";
+import type { Element } from "hast";
+
+type MarkdownTableProps =
+  TableHTMLAttributes<HTMLTableElement> &
+  ExtraProps & {
+    node?: Element;
+  };
 // Swapped in as ReactMarkdown's `table` renderer (see MessageList.tsx) - a narrow/short table
 // renders exactly as before (just wrapped for horizontal-scroll safety); a wide/long one shows
 // a truncated preview instead, with the FULL table (the same `children` react-markdown already
@@ -95,11 +104,7 @@ export default function MarkdownTable({
   node,
   children,
   ...props
-}: {
-  node?: HastNode;
-  children?: ReactNode;
-  [key: string]: unknown;
-}) {
+}: MarkdownTableProps) {
   const [open, setOpen] = useState(false);
 
   if (!node) {
