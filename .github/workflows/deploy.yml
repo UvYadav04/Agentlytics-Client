@@ -20,6 +20,9 @@ jobs:
             --password-stdin
 
       - name: Build Client Image
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
         run: docker compose build client
 
       - name: Push Client Image
