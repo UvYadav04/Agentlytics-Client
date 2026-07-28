@@ -72,7 +72,6 @@ export default function SignupPage() {
   return (
     <AuthLayout centered>
       <h2 className="text-2xl font-bold tracking-tight">Create your account</h2>
-      <p className="mt-1.5 text-sm text-muted">Free to start - no card required.</p>
 
       <div className="mt-6">
         <GoogleLoginButton
