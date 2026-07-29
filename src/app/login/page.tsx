@@ -58,7 +58,7 @@ export default function LoginPage() {
       <div className="mt-6 w-full">
         <GoogleLoginButton
           label="Continue with Google"
-          className="w-full rounded-full bg-accent border border-border bg-card px-4 py-2.5 text-sm font-medium text-text shadow-card transition-colors hover:border-accent hover:text-accent-dark"
+          className="w-full rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-text shadow-card transition-colors hover:border-accent hover:text-accent-dark"
         />
       </div>
 
