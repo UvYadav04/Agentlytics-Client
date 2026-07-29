@@ -32,22 +32,21 @@ export default function InvestigationTrail({
   });
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
 
-  if(!live)
+  if (!live)
     return null
 
   return (
     <ul className="mt-2 space-y-1.5 ">
-          {live &&
+      {/* {live &&
         <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
            <h3 className="shrink-0 text-[11px] tabular-nums text-muted">working for </h3><ElapsedTimer startedAt={startedAt} className="shrink-0 text-[11px] tabular-nums text-muted" />
           </li> 
-}
-          
-          <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
+} */}
+
+      <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
         <span
-          className={`size-[7px] shrink-0 rounded-full bg-accent ${
-            live && steps.length === 0 ? "animate-pulse" : ""
-          }`}
+          className={`size-[7px] shrink-0 rounded-full bg-accent ${live && steps.length === 0 ? "animate-pulse" : ""
+            }`}
         />
         <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
       </li>

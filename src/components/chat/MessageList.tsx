@@ -218,7 +218,7 @@ export default function MessageList({
               <ul className="mt-2 space-y-1.5">
                 <li className="flex items-start gap-2 text-xs text-muted">
                   <span className="mt-1 size-3 shrink-0 animate-pulse rounded-full bg-accent"/>
-                  <ElapsedTimer startedAt={requestStartedAt} className="ml-auto shrink-0 text-[11px] tabular-nums text-muted" />
+                  {/* <ElapsedTimer startedAt={requestStartedAt} className="ml-auto shrink-0 text-[11px] tabular-nums text-muted" /> */}
                 </li>
               </ul>
             </div>
