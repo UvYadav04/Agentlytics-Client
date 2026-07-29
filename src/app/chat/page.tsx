@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   api,
@@ -14,6 +14,7 @@ import {
   useSendMessageMutation,
 } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/lib/hooks";
+import type { ChatMessage } from "@/lib/types";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import WorkspaceSwitcher from "@/components/chat/WorkspaceSwitcher";
 import FilesPanel from "@/components/chat/FilesPanel";
@@ -52,15 +53,19 @@ function ChatPageInner() {
   const [liveInvestigationId, setLiveInvestigationId] = useState<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [startingChat, setStartingChat] = useState(false);
-  // Optimistic echo of the user's own message - shown the instant they hit
-  // send, instead of waiting on the round trip + the getMessages refetch it
-  // triggers (see handleSend/handleStartChat). Cleared only once that
-  // refetch has actually landed, so it hands off to the real message
-  // without a flash or a duplicate bubble.
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  // The chat's message list, owned locally instead of read straight off the RTK Query cache.
+  // Hydrated from the server only when the chat changes (or on its initial fetch) - see the
+  // effect below. A sent user message or a completed assistant message is appended directly
+  // here instead of going through invalidateTags + a full-list refetch.
+  const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([]);
+  const hydratedChatRef = useRef<string | null>(null);
+  // True only for the brief window between hitting send and the SSE stream actually starting
+  // (liveInvestigationId being set) or the request failing/hitting a limit - drives the small
+  // "sending..." indicator in MessageList.
+  const [sending, setSending] = useState(false);
   // Date.now() from the moment the user hit send - drives the elapsed-time
-  // readout in MessageList/InvestigationTrail. Set alongside pendingMessage,
-  // but stays set for the WHOLE investigation (through liveInvestigationId
+  // readout in MessageList/InvestigationTrail. Set alongside sending, but
+  // stays set for the WHOLE investigation (through liveInvestigationId
   // streaming) rather than being cleared with it - only cleared once the
   // investigation reaches a terminal state (handleLiveTerminal), hits the
   // usage limit, errors out, or the user switches chats/workspaces.
@@ -125,18 +130,32 @@ function ChatPageInner() {
     chatId ?? "",
     { skip: !chatId }
   );
+
+  // Hydrate currentMessages from the server exactly once per chat load (mount, or switching to
+  // a different chat). Once hydrated for a given chatId, later changes to the RTK cache (a
+  // background refetch, another tab, focus refetch, etc.) are ignored - only handleSend/
+  // handleStartChat/handleLiveTerminal append to currentMessages after that point.
+  useEffect(() => {
+    if (!chatId) {
+      setCurrentMessages([]);
+      hydratedChatRef.current = null;
+      return;
+    }
+    if (messagesLoading) return;
+    if (hydratedChatRef.current === chatId) return;
+    setCurrentMessages(chatMessages);
+    hydratedChatRef.current = chatId;
+  }, [chatId, chatMessages, messagesLoading]);
+
   const showEmptyComposer =
-    !!chatId && !messagesLoading && chatMessages.length === 0 && !liveInvestigationId && !pendingMessage;
+    !!chatId && !messagesLoading && currentMessages.length === 0 && !liveInvestigationId && !sending;
 
   function selectWorkspace(id: string) {
     setWorkspaceId(id);
     setChatId(null);
     setLiveInvestigationId(null);
     setRequestStartedAt(null);
-    // Otherwise a message sent right before switching away would still be
-    // "pending" when MessageList mounts for whatever's selected next, and
-    // its optimistic-echo effect would append that stale text there instead.
-    setPendingMessage(null);
+    setSending(false);
   }
 
   function selectChat(id: string | null) {
@@ -144,30 +163,48 @@ function ChatPageInner() {
     setLiveInvestigationId(null);
     setLimitMessage(null);
     setRequestStartedAt(null);
-    setPendingMessage(null);
+    setSending(false);
   }
 
   async function handleSend(content: string, fileIds: string[]) {
     if (!chatId) return;
     setLimitMessage(null);
-    setPendingMessage(content);
+    setSending(true);
     setRequestStartedAt(Date.now());
+    const tempId = `pending-${Date.now()}`;
+    setCurrentMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        chat_id: chatId,
+        role: "user",
+        content,
+        investigation_id: null,
+        chart_ids: [],
+        report_id: null,
+        files_used: fileIds,
+        created_at: new Date().toISOString(),
+      },
+    ]);
     try {
       const res = await sendMessage({ chatId, content, fileIds }).unwrap();
+      setCurrentMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, id: res.message_id, investigation_id: res.investigation_id } : m
+        )
+      );
       if (res.limited) {
         setLimitMessage(res.limit_message);
         setRequestStartedAt(null);
       } else {
         setLiveInvestigationId(res.investigation_id);
       }
-      // Pull the just-created user message into the cache before dropping
-      // the optimistic bubble above, so the handoff is invisible.
-      await dispatch(api.endpoints.getMessages.initiate(chatId, { forceRefetch: true }));
     } catch (err) {
+      setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
       setRequestStartedAt(null);
       throw err;
     } finally {
-      setPendingMessage(null);
+      setSending(false);
     }
   }
 
@@ -182,26 +219,48 @@ function ChatPageInner() {
   async function handleStartChat(content: string) {
     if (!workspaceId || startingChat) return;
     setStartingChat(true);
-    setPendingMessage(content);
+    setSending(true);
     setRequestStartedAt(Date.now());
+    const tempId = `pending-${Date.now()}`;
     try {
       const chat = await createChat({ workspaceId }).unwrap();
       setChatId(chat.id);
+      // Brand-new chat - nothing to hydrate from the server, so the chatId-change effect above
+      // should leave currentMessages (the optimistic entry below) alone.
+      hydratedChatRef.current = chat.id;
       setLimitMessage(null);
+      setCurrentMessages([
+        {
+          id: tempId,
+          chat_id: chat.id,
+          role: "user",
+          content,
+          investigation_id: null,
+          chart_ids: [],
+          report_id: null,
+          files_used: [],
+          created_at: new Date().toISOString(),
+        },
+      ]);
       const res = await sendMessage({ chatId: chat.id, content }).unwrap();
+      setCurrentMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, id: res.message_id, investigation_id: res.investigation_id } : m
+        )
+      );
       if (res.limited) {
         setLimitMessage(res.limit_message);
         setRequestStartedAt(null);
       } else {
         setLiveInvestigationId(res.investigation_id);
       }
-      await dispatch(api.endpoints.getMessages.initiate(chat.id, { forceRefetch: true }));
     } catch (err) {
+      setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
       setRequestStartedAt(null);
       throw err;
     } finally {
       setStartingChat(false);
-      setPendingMessage(null);
+      setSending(false);
     }
   }
 
@@ -212,16 +271,30 @@ function ChatPageInner() {
   }
 
   function handleLiveTerminal() {
-    setLiveInvestigationId(null);
+    const finishedChatId = chatId;
     setRequestStartedAt(null);
-    if (!chatId || !workspaceId) return;
-    // The worker created a new assistant Message and possibly Chart/Report
-    // docs + bumped Usage counters - none of that came back as a mutation
-    // response (it happened async, after the SSE stream finished), so pull
-    // it in explicitly here instead of polling.
+    if (!finishedChatId || !workspaceId) {
+      setLiveInvestigationId(null);
+      return;
+    }
+    // The worker created a new assistant Message (and possibly Chart/Report docs, and bumped
+    // Usage counters) asynchronously, after the SSE stream closed - none of that came back as a
+    // mutation response. Fetch the fresh list ONCE via a direct, non-tag-invalidating request
+    // and append only the message(s) not already in currentMessages, instead of invalidating the
+    // "Message" tag (which would cascade into a full-list refetch for every subscriber).
+    dispatch(api.endpoints.getMessages.initiate(finishedChatId, { forceRefetch: true }))
+      .then((result) => {
+        const fresh = result.data ?? [];
+        setCurrentMessages((prev) => {
+          const known = new Set(prev.map((m) => m.id));
+          const additions = fresh.filter((m) => !known.has(m.id));
+          return additions.length ? [...prev, ...additions] : prev;
+        });
+      })
+      .finally(() => setLiveInvestigationId(null));
+
     dispatch(
       api.util.invalidateTags([
-        { type: "Message", id: `LIST-${chatId}` },
         { type: "Chart", id: `WORKSPACE-${workspaceId}` },
         { type: "Dashboard", id: `LIST-${workspaceId}` },
         "Usage",
@@ -299,7 +372,7 @@ function ChatPageInner() {
           </div>
         ) : chatId && showEmptyComposer ? (
           <EmptyChatComposer
-            submitting={!!pendingMessage}
+            submitting={sending}
             onSubmit={(content) => handleSend(content, [])}
           />
         ) : chatId ? (
@@ -307,8 +380,9 @@ function ChatPageInner() {
             <MessageList
               chatId={chatId}
               workspaceId={workspaceId}
+              messages={currentMessages}
               liveInvestigationId={liveInvestigationId}
-              pendingMessage={pendingMessage}
+              sending={sending}
               requestStartedAt={requestStartedAt}
               onLiveTerminal={handleLiveTerminal}
             />

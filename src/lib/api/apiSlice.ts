@@ -262,6 +262,10 @@ export const api = createApi({
         { type: "Message" as const, id: `LIST-${chatId}` },
       ],
     }),
+    // No invalidatesTags here on purpose - the chat page appends the user's message (and later
+    // the assistant's, once the investigation completes) directly into its own local message
+    // list instead of invalidating the "Message" tag and letting RTK Query refetch the whole
+    // list. See app/chat/page.tsx's currentMessages state.
     sendMessage: builder.mutation<
       SendMessageResult,
       { chatId: string; content: string; fileIds?: string[] }
@@ -271,9 +275,6 @@ export const api = createApi({
         method: "POST",
         body: { content, file_ids: fileIds ?? [] },
       }),
-      invalidatesTags: (result, error, arg) => [
-        { type: "Message", id: `LIST-${arg.chatId}` },
-      ],
     }),
     getActiveInvestigation: builder.query<{ investigation_id: string | null }, string>({
       query: (chatId) => `/chats/${chatId}/active-investigation`,

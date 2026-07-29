@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FileText } from "lucide-react";
-import { useGetChartQuery, useGetFilesQuery, useGetMessagesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
+import { useGetChartQuery, useGetFilesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
 import type { ChatMessage } from "@/lib/types";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
@@ -71,21 +71,23 @@ function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: 
 export default function MessageList({
   chatId,
   workspaceId,
+  messages,
   liveInvestigationId,
-  pendingMessage,
+  sending,
   requestStartedAt,
   onLiveTerminal,
 }: {
   chatId: string;
   workspaceId: string | null;
+  messages: ChatMessage[];
   liveInvestigationId: string | null;
-  pendingMessage: string | null;
+  sending: boolean;
   requestStartedAt: number | null;
   onLiveTerminal: () => void;
 }) {
-  const { data: messages = [] } = useGetMessagesQuery(chatId);
-
-  const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>(messages);
+  // messages is owned by the parent page (currentMessages) - hydrated from the server only on
+  // chat load/switch, appended to directly on send and on assistant completion. Nothing in this
+  // component re-fetches or re-syncs it.
 
   // Scroll container + the content wrapper inside it. Kept separate so a
   // ResizeObserver can watch the *content* grow (new messages, or the live
@@ -137,38 +139,10 @@ export default function MessageList({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!pendingMessage) {
-      setDisplayMessages(messages);
-      return;
-    }
-    const alreadyLanded = messages.some(
-      (m) => m.role === "user" && m.content === pendingMessage
-    );
-    if (alreadyLanded) {
-      setDisplayMessages(messages);
-      return;
-    }
-    setDisplayMessages([
-      ...messages,
-      {
-        id: "pending",
-        chat_id: chatId,
-        role: "user",
-        content: pendingMessage,
-        investigation_id: null,
-        chart_ids: [],
-        report_id: null,
-        files_used: [],
-        created_at: new Date().toISOString(),
-      },
-    ]);
-  }, [messages, pendingMessage, chatId]);
-
   // Normally the parent page swaps this whole component out for
   // EmptyChatComposer while there are zero messages - this is just a
   // defensive fallback (e.g. mid-refetch) so it never renders a blank pane.
-  if (displayMessages.length === 0 && !liveInvestigationId && !pendingMessage) {
+  if (messages.length === 0 && !liveInvestigationId && !sending) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center text-center text-muted px-6">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-accent/20 bg-accent-soft">
@@ -184,7 +158,7 @@ export default function MessageList({
   return (
     <div ref={outerRef} className="flex-1 overflow-y-auto bg-bg px-6 py-6">
       <div ref={innerRef} className="space-y-5">
-      {displayMessages.map((m) => (
+      {messages.map((m) => (
         <div
           key={m.id}
           className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -238,7 +212,7 @@ export default function MessageList({
           </div>
         </div>
       ) : (
-        pendingMessage && (
+        sending && (
           <div className="flex justify-start">
             <div className="max-w-2xl">
               <ul className="mt-2 space-y-1.5">
