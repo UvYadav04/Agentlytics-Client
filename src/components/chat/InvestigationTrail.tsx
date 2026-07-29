@@ -32,8 +32,8 @@ export default function InvestigationTrail({
   });
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
 
-  if (!live)
-    return null
+  // if (!live)
+  //   return null
 
   return (
     <ul className="mt-2 space-y-1.5 ">
@@ -51,11 +51,15 @@ export default function InvestigationTrail({
         <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
       </li>
       {steps.map((e, i) => (
-        <li key={i} className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
+        <li key={i} className="flex place-content-start gap-1 text-xs text-muted">
           <span
-            className={` size-[7px] shrink-0 rounded-full ${TYPE_COLOR[e.type] || "bg-border"}`}
+            className={`mt-[3px] size-[7px] shrink-0 rounded-full ${TYPE_COLOR[e.type] || "bg-border"}`}
           />
-          <span className="mb-[2px]">{e.message}</span>
+          {/* tool_call/tool_result messages can carry a few embedded \n's - a code preview or a
+              stdout preview a couple lines long, capped and "..."-terminated server-side (see
+              analyzerEngine/agents/events.py's truncate_lines) - pre-line keeps those as real
+              line breaks without also preserving run-on whitespace within a line. */}
+          <span className="mb-[2px] whitespace-pre-line">{e.message}</span>
         </li>
       ))}
     </ul>

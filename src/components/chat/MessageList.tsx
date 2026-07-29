@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import { FileText } from "lucide-react";
 import { useGetChartQuery, useGetFilesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
 import type { ChatMessage } from "@/lib/types";
+import AutoHeightIframe from "@/components/AutoHeightIframe";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
 import MarkdownTable from "./MarkdownTable";
@@ -14,16 +15,47 @@ import type { Components } from "react-markdown";
 
 const MARKDOWN_COMPONENTS: Components = { table: MarkdownTable };
 
-function ChartThumb({ chartId }: { chartId: string }) {
-  const { data: chart } = useGetChartQuery(chartId);
+// Inline, interactive chart preview - same sandboxed AutoHeightIframe the standalone /chart/[id]
+// page uses (chart.url is a presigned link straight to the generated, self-contained HTML file -
+// see reporting_tools.py/tabular_tools.py server-side), just rendered right in the message bubble
+// instead of behind a click. "Open full view" still deep-links to the standalone page for a
+// bigger canvas / sharing a direct link.
+function ChartPreview({ chartId }: { chartId: string }) {
+  const { data: chart, isError } = useGetChartQuery(chartId);
+
+  if (isError) {
+    return (
+      <div className="rounded-card border border-border bg-bg px-3 py-2 text-xs text-rust">
+        Failed to load chart
+      </div>
+    );
+  }
+
   return (
-    <Link
-      href={`/chart/${chartId}`}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-medium transition-colors hover:border-accent hover:bg-accent-soft/50 hover:text-accent-dark"
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-      {chart?.title || "Loading..."}
-    </Link>
+    <div className="w-full overflow-hidden rounded-card border border-border bg-card shadow-card">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="flex items-center gap-1.5 truncate text-xs font-medium text-text">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+          <span className="truncate">{chart?.title || "Loading chart..."}</span>
+        </span>
+        {chart && (
+          <Link
+            href={`/chart/${chartId}`}
+            className="shrink-0 text-[11px] font-medium text-muted transition-colors hover:text-accent-dark"
+          >
+            Open full view &#8599;
+          </Link>
+        )}
+      </div>
+      {chart ? (
+        // Never injected into our DOM - a sandboxed iframe loads the generated HTML straight
+        // from its own presigned URL, so the chart's own hover/zoom/tooltip JS keeps working
+        // exactly as it does on the full-page view.
+        <AutoHeightIframe src={chart.url} title={chart.title} className="w-full" />
+      ) : (
+        <div className="h-48 w-full animate-pulse bg-border/30" />
+      )}
+    </div>
   );
 }
 
@@ -184,16 +216,21 @@ export default function MessageList({
               <FilesUsedRow workspaceId={workspaceId} fileIds={m.files_used} />
             )}
 
-            {(m.chart_ids.length > 0 || m.report_id) && (
+            {m.chart_ids.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {m.chart_ids.map((id) => (
+                  <ChartPreview key={id} chartId={id} />
+                ))}
+              </div>
+            )}
+
+            {m.report_id && (
               <div
                 className={`mt-3 flex flex-wrap gap-2 ${
                   m.role === "user" ? "justify-end" : ""
                 }`}
               >
-                {m.chart_ids.map((id) => (
-                  <ChartThumb key={id} chartId={id} />
-                ))}
-                {m.report_id && <ReportThumb reportId={m.report_id} />}
+                <ReportThumb reportId={m.report_id} />
               </div>
             )}
           </div>
