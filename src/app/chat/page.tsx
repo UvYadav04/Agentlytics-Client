@@ -183,6 +183,7 @@ function ChatPageInner() {
         chart_ids: [],
         report_id: null,
         files_used: fileIds,
+        follow_up_questions: [],
         created_at: new Date().toISOString(),
       },
     ]);
@@ -239,6 +240,7 @@ function ChatPageInner() {
           chart_ids: [],
           report_id: null,
           files_used: [],
+          follow_up_questions: [],
           created_at: new Date().toISOString(),
         },
       ]);
@@ -385,6 +387,7 @@ function ChatPageInner() {
               sending={sending}
               requestStartedAt={requestStartedAt}
               onLiveTerminal={handleLiveTerminal}
+              onSend={handleSend}
             />
             <InputBar
               workspaceId={workspaceId ?? ""}

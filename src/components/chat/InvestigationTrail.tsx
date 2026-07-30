@@ -1,17 +1,73 @@
 "use client";
 
+import { Check, Loader2, X } from "lucide-react";
 import { useInvestigationStream } from "@/lib/useInvestigationStream";
+import type { InvestigationEvent } from "@/lib/types";
 import ElapsedTimer from "./ElapsedTimer";
 
 const TYPE_COLOR: Record<string, string> = {
   tool_call: "bg-accent",
   tool_result: "bg-clay",
+  tool_error: "bg-rust",
   status: "bg-gold",
   answer: "bg-plum",
   completed: "bg-accent-dark",
   cancelled: "bg-muted",
   error: "bg-rust",
 };
+
+// A tool_call is always followed by exactly one tool_result or tool_error for the same call (see
+// analyzerEngine/agents/events.py's make_tool_event_translator) - merge each such pair into ONE
+// row instead of two: the step's label stays put, a spinner sits at the right while waiting for
+// the matching result, then swaps to a check (tool_result) or cross (tool_error) once it lands.
+// Anything else (status/cancelled/error, or a tool_call still awaiting its result at the tail of
+// the stream) renders as its own plain row with the usual colored dot.
+
+interface rowEvent { kind: "pair"; key: string; message: string; status: "pending" | "success" | "error" }
+interface event { kind: "plain"; key: string; message: string; type: string };
+type Row =
+  | event
+  | rowEvent
+
+function buildRows(steps: InvestigationEvent[]): Row[] {
+  const rows: Row[] = [];
+  const stack: number[] = [];
+
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+
+    if (step.type === "tool_call") {
+      rows.push({
+        kind: "pair",
+        key: `${i}`,
+        message: step.message,
+        status: "pending",
+      });
+
+      stack.push(rows.length - 1);
+      continue;
+    }
+
+    if (step.type === "tool_result") {
+      const rowIndex = stack.pop();
+
+      if (rowIndex !== undefined) {
+        (rows[rowIndex] as rowEvent).status = "success";
+      }
+
+      continue;
+    }
+
+    rows.push({
+      kind: "plain",
+      key: `${i}`,
+      message: step.message,
+      type: step.type,
+    });
+  }
+
+  return rows;
+}
 
 export default function InvestigationTrail({
   investigationId,
@@ -31,18 +87,12 @@ export default function InvestigationTrail({
     onTerminal?.();
   });
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
+  const rows = buildRows(steps);
 
-  // if (!live)
-  //   return null
+  console.log(events)
 
   return (
     <ul className="mt-2 space-y-1.5 ">
-      {/* {live &&
-        <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
-           <h3 className="shrink-0 text-[11px] tabular-nums text-muted">working for </h3><ElapsedTimer startedAt={startedAt} className="shrink-0 text-[11px] tabular-nums text-muted" />
-          </li> 
-} */}
-
       <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
         <span
           className={`size-[7px] shrink-0 rounded-full bg-accent ${live && steps.length === 0 ? "animate-pulse" : ""
@@ -50,18 +100,38 @@ export default function InvestigationTrail({
         />
         <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
       </li>
-      {steps.map((e, i) => (
-        <li key={i} className="flex place-content-start gap-1 text-xs text-muted">
-          <span
-            className={`mt-[3px] size-[7px] shrink-0 rounded-full ${TYPE_COLOR[e.type] || "bg-border"}`}
-          />
-          {/* tool_call/tool_result messages can carry a few embedded \n's - a code preview or a
-              stdout preview a couple lines long, capped and "..."-terminated server-side (see
-              analyzerEngine/agents/events.py's truncate_lines) - pre-line keeps those as real
-              line breaks without also preserving run-on whitespace within a line. */}
-          <span className="mb-[2px] whitespace-pre-line">{e.message}</span>
-        </li>
-      ))}
+      {rows.map((row, index) =>
+        row.kind === "pair" ? (
+          <li key={row.key} className="flex items-center gap-1.5 text-xs text-muted">
+            <span
+              className={`size-[7px] shrink-0 rounded-full ${row.status === "pending"
+                ? "animate-pulse bg-accent"
+                : row.status === "success"
+                  ? "bg-accent-dark"
+                  : "bg-rust"
+                }`}
+            />
+
+            <span className="mb-[2px] min-w-0 flex-1 whitespace-pre-line">{row.message}</span>
+            {row.status === "error" && (
+              <X className="size-3 shrink-0 text-rust" aria-label="Failed" />
+            )}
+            {row.status === "pending" && (
+              <Loader2 className="size-3 shrink-0 animate-spin text-muted" aria-label="Running" />
+            )}
+            {row.status === "success" && (
+              <Check className="size-3 shrink-0 text-accent-dark" aria-label="Done" />
+            )}
+          </li>
+        ) : (
+          <li key={row.key} className="flex place-content-start gap-1 text-xs text-muted">
+            <span
+              className={`mt-[3px] size-[7px] shrink-0 rounded-full ${TYPE_COLOR[row.type] || "bg-border"}`}
+            />
+            <span className="mb-[2px] whitespace-pre-line">{row.message}</span>
+          </li>
+        )
+      )}
     </ul>
   );
 }

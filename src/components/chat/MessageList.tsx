@@ -100,6 +100,32 @@ function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: 
   );
 }
 
+// Clickable suggested-next-question chips (see shared/models/message.py's
+// Message.follow_up_questions / analyzerEngine/tools/orchestrator/follow_up.py). Clicking one
+// sends it exactly like typing it into the composer and hitting send.
+function FollowUpChips({
+  questions,
+  onSend,
+}: {
+  questions: string[];
+  onSend: (content: string, fileIds: string[]) => void;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {questions.map((q) => (
+        <button
+          key={q}
+          type="button"
+          onClick={() => onSend(q, [])}
+          className="rounded-full border border-border bg-bg px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-accent hover:bg-accent-soft/50 hover:text-accent-dark"
+        >
+          {q}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function MessageList({
   chatId,
   workspaceId,
@@ -108,6 +134,7 @@ export default function MessageList({
   sending,
   requestStartedAt,
   onLiveTerminal,
+  onSend,
 }: {
   chatId: string;
   workspaceId: string | null;
@@ -116,7 +143,11 @@ export default function MessageList({
   sending: boolean;
   requestStartedAt: number | null;
   onLiveTerminal: () => void;
+  // Same handler InputBar's composer uses (chat/page.tsx's handleSend) - wired up here too so
+  // clicking a follow-up suggestion sends it exactly like typing it and hitting send.
+  onSend: (content: string, fileIds: string[]) => void;
 }) {
+  const busy = sending || !!liveInvestigationId;
   // messages is owned by the parent page (currentMessages) - hydrated from the server only on
   // chat load/switch, appended to directly on send and on assistant completion. Nothing in this
   // component re-fetches or re-syncs it.
@@ -157,6 +188,19 @@ export default function MessageList({
     scrollToBottom();
   }, [chatId]);
 
+  // Sending a message re-pins to the bottom even if the user had scrolled up to read earlier
+  // history - `sending` flips true for the brief window between hitting send and the request
+  // resolving (see chat/page.tsx's handleSend), which is exactly "the user just sent a message".
+  // Once pinned, the ResizeObserver below keeps it stuck to the bottom as the live investigation
+  // trail streams in and the final answer is appended, same as any other content-growth case -
+  // this effect only needs to handle the initial jump.
+  useLayoutEffect(() => {
+    if (sending) {
+      stickToBottomRef.current = true;
+      scrollToBottom();
+    }
+  }, [sending]);
+
   useLayoutEffect(() => {
     if (stickToBottomRef.current) scrollToBottom();
   });
@@ -190,7 +234,7 @@ export default function MessageList({
   return (
     <div ref={outerRef} className="flex-1 overflow-y-auto bg-bg px-6 py-6">
       <div ref={innerRef} className="space-y-5">
-      {messages.map((m) => (
+      {messages.map((m, idx) => (
         <div
           key={m.id}
           className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -233,6 +277,16 @@ export default function MessageList({
                 <ReportThumb reportId={m.report_id} />
               </div>
             )}
+
+            {/* Only the most recent assistant turn, and only once nothing is actively running -
+                a follow-up suggestion from three messages ago is more likely to confuse than
+                help, and clicking one mid-stream would fire a second send on top of the first. */}
+            {m.role === "assistant" &&
+              idx === messages.length - 1 &&
+              !busy &&
+              m.follow_up_questions?.length > 0 && (
+                <FollowUpChips questions={m.follow_up_questions} onSend={onSend} />
+              )}
           </div>
         </div>
       ))}

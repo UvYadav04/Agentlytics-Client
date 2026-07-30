@@ -313,7 +313,10 @@ export default function AboutPage() {
             About Agentlytics - {STAGES.length} stages, one straight line
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            How an answer actually gets made
+            How an answer actually{" "}
+            <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
+              gets made
+            </span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-muted text-lg">
             Agentlytics is a workspace where you hand over messy files and get

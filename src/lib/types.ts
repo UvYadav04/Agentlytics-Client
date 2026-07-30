@@ -49,13 +49,20 @@ export type ChatMessage = {
   chart_ids: string[];
   report_id: string | null;
   files_used: string[];
+  // 2-3 suggested next questions - only ever populated on assistant messages that went through
+  // a real investigation (see shared/models/message.py's Message.follow_up_questions).
+  follow_up_questions: string[];
   created_at: string;
 };
 
 export type InvestigationEvent = {
   type: string;
   message: string;
-  data: Record<string, unknown>;
+  // Backend no longer sends a data payload on tool_call/tool_result/tool_error events (see
+  // analyzerEngine/agents/events.py) - everything the UI needs comes from `type` + `message`.
+  // Optional since InvestigationEvent.data still defaults to {} server-side for other event
+  // kinds (status/completed/error/cancelled) that DO still populate it.
+  data?: Record<string, unknown>;
   at: string;
 };
 

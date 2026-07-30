@@ -11,12 +11,17 @@ import {
   CheckCircle2,
   Cog,
   Database,
+  Filter,
   FileSearch,
+  FileText,
   Layers,
   Link2,
   Lock,
+  Quote,
   Rocket,
+  Search,
   Sparkles,
+  Table2,
 } from "lucide-react";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
 import Reveal from "@/components/Reveal";
@@ -374,11 +379,19 @@ export default function HomePage() {
               No answer without evidence traced to a real file
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-tight">
-              Talk to your data files.
+              <span className="font-bold">Talk To Your Data.</span>
               <br />
-              Get answers you can{" "}
-              <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
-                put your name on.
+             
+              <span className="bg-gradient-to-r font-bold bg-clip-text">
+                From 
+                <span className=" bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent"> questions </span>
+                 to 
+                 
+                <span className=" bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent"> charts, </span>
+              
+                <span className=" bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">reports, </span>
+                and 
+                <span className=" bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent"> Insights. </span>
               </span>
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-muted text-sm sm:text-base lg:mx-0">
@@ -429,11 +442,12 @@ export default function HomePage() {
       <section className="px-6 py-20">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Not just an answer - a chart, when you need one
+            Charts that tell the story
           </h2>
           <p className="mt-3 text-muted">
-            Ask for a breakdown and get a real visual back, saved to your
-            workspace alongside the investigation that produced it.
+            Not just a number - a real chart, generated the moment you ask
+            for a breakdown and saved to your workspace alongside the
+            investigation that produced it.
           </p>
         </Reveal>
 
@@ -449,6 +463,145 @@ export default function HomePage() {
               </div>
             </Reveal>
           ))}
+        </div>
+      </section>
+
+      {/* Spreadsheets - CSV/XLSX */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal>
+              <span className="inline-flex items-center gap-2 rounded-full bg-teal px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                CSV &amp; Excel
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+                Turn spreadsheets into decisions.
+              </h2>
+              <p className="mt-4 text-muted leading-relaxed">
+                Drop in a messy export, a multi-tab workbook, or a pile of
+                CSVs and ask for the number you actually need. Every total,
+                filter, and pivot runs as a real computation against your
+                data - never eyeballed, never approximated.
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: Table2, text: "Every row stays queryable, across every sheet" },
+                  { icon: Calculator, text: "Real computations, not guessed-at numbers" },
+                  { icon: Filter, text: "Filter, group, and pivot with a sentence" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-2.5 text-text">
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0_20px_60px_-25px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+                  <Table2 className="h-4 w-4 text-teal" />
+                  <span className="text-xs font-medium text-muted">
+                    regional-sales-q3.xlsx
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border text-xs">
+                    {["Region", "Target", "Actual"].map((h) => (
+                      <div key={h} className="bg-bg px-3 py-2 font-semibold text-muted">
+                        {h}
+                      </div>
+                    ))}
+                    {[
+                      ["East", "$480K", "$512K"],
+                      ["Central", "$390K", "$401K"],
+                      ["West", "$560K", "$412K"],
+                    ].map((row, ri) =>
+                      row.map((cell, ci) => (
+                        <div
+                          key={`${ri}-${ci}`}
+                          className={`bg-card px-3 py-2 ${
+                            ri === 2 && ci === 2 ? "font-semibold text-rust" : "text-text"
+                          }`}
+                        >
+                          {cell}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-muted">
+                    <span>Computed live from the workbook</span>
+                    <span className="rounded-full bg-teal/10 px-2 py-0.5 font-medium text-teal">
+                      West missed by 26%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* PDFs & documents */}
+      <section className="border-t border-border bg-card/60">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal className="lg:order-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-plum px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                PDFs &amp; documents
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+                Buried in a 90-page contract? Not anymore.
+              </h2>
+              <p className="mt-4 text-muted leading-relaxed">
+                Reports, contracts, scanned filings - long documents get
+                parsed, chunked, and indexed so a question finds the exact
+                paragraph that answers it, not just the file it's hiding in.
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: FileText, text: "Reads contracts, reports, and scanned PDFs" },
+                  { icon: Search, text: "Finds the paragraph, not just the file" },
+                  { icon: Quote, text: "Cites the exact page for every claim" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-2.5 text-text">
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-plum" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+
+            <Reveal delay={120} className="lg:order-1">
+              <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0_20px_60px_-25px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+                  <FileText className="h-4 w-4 text-plum" />
+                  <span className="text-xs font-medium text-muted">
+                    vendor-agreement.pdf
+                  </span>
+                  <span className="ml-auto rounded-full bg-plum/10 px-2 py-0.5 text-[11px] font-medium text-plum">
+                    Page 12
+                  </span>
+                </div>
+                <div className="space-y-2.5 p-5">
+                  <div className="h-2.5 w-11/12 rounded bg-border/70" />
+                  <div className="h-2.5 w-full rounded bg-border/70" />
+                  <div className="rounded-lg border-l-2 border-plum bg-plum/5 px-3 py-2 text-sm leading-relaxed text-text">
+                    &ldquo;Either party may terminate this agreement with{" "}
+                    <strong>60 days written notice</strong>.&rdquo;
+                  </div>
+                  <div className="h-2.5 w-4/5 rounded bg-border/70" />
+                  <div className="h-2.5 w-2/3 rounded bg-border/70" />
+                  <div className="flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted">
+                    <span>Section 8.2 - Termination</span>
+                    <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent-dark">
+                      Cited in answer
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 

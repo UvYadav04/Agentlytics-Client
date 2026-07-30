@@ -5,9 +5,9 @@ import Navbar from "@/components/Navbar";
 import CanvasCursor from "@/components/cursor/CanvasCursor";
 
 export const metadata: Metadata = {
-  title: "Agentlytics",
+  title: "Agentlytics — Multi-Agent AI Data Analyzer",
   description:
-    "Talk to your data files and get answers backed by real evidence - every claim traced back to the file it came from.",
+    "Ask questions across your CSVs, spreadsheets, PDFs, and documents in plain English. Specialized AI agents investigate your files and answer with evidence traced back to the exact row or page it came from.",
 };
 
 export default function RootLayout({

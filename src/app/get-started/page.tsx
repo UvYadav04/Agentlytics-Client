@@ -113,11 +113,15 @@ export default function GetStartedPage() {
             Getting started with Agentlytics
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-            More than answers - reports, dashboards, and a memory of your data
+            Your workspace does more than answer.
+            <br />
+            <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
+              It remembers, reports, and builds.
+            </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-muted text-sm sm:text-base">
             A workspace is more than a chat box. Here's what you can build
-            once your files are in it.
+            once your CSVs, spreadsheets, and PDFs are in it.
           </p>
         </Reveal>
       </section>
