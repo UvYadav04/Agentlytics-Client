@@ -15,11 +15,6 @@ import type { Components } from "react-markdown";
 
 const MARKDOWN_COMPONENTS: Components = { table: MarkdownTable };
 
-// Inline, interactive chart preview - same sandboxed AutoHeightIframe the standalone /chart/[id]
-// page uses (chart.url is a presigned link straight to the generated, self-contained HTML file -
-// see reporting_tools.py/tabular_tools.py server-side), just rendered right in the message bubble
-// instead of behind a click. "Open full view" still deep-links to the standalone page for a
-// bigger canvas / sharing a direct link.
 function ChartPreview({ chartId }: { chartId: string }) {
   const { data: chart, isError } = useGetChartQuery(chartId);
 
@@ -48,9 +43,7 @@ function ChartPreview({ chartId }: { chartId: string }) {
         )}
       </div>
       {chart ? (
-        // Never injected into our DOM - a sandboxed iframe loads the generated HTML straight
-        // from its own presigned URL, so the chart's own hover/zoom/tooltip JS keeps working
-        // exactly as it does on the full-page view.
+       
         <AutoHeightIframe src={chart.url} title={chart.title} className="w-full" />
       ) : (
         <div className="h-48 w-full animate-pulse bg-border/30" />
@@ -72,11 +65,6 @@ function ReportThumb({ reportId }: { reportId: string }) {
   );
 }
 
-// "These files were used for this" - a quiet, non-clickable readout of which workspace files
-// this specific answer was actually based on (Message.files_used, straight off
-// OrchestratorResult.files_used server-side - see FinalResultCollector). Resolves filenames
-// against the same getFiles cache FilesPanel/InputBar already populate for this workspace, so
-// this never costs an extra request.
 function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: string[] }) {
   const { data: files = [] } = useGetFilesQuery(workspaceId);
   if (fileIds.length === 0) return null;
@@ -99,10 +87,6 @@ function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: 
     </div>
   );
 }
-
-// Clickable suggested-next-question chips (see shared/models/message.py's
-// Message.follow_up_questions / analyzerEngine/tools/orchestrator/follow_up.py). Clicking one
-// sends it exactly like typing it into the composer and hitting send.
 function FollowUpChips({
   questions,
   onSend,
@@ -143,24 +127,13 @@ export default function MessageList({
   sending: boolean;
   requestStartedAt: number | null;
   onLiveTerminal: () => void;
-  // Same handler InputBar's composer uses (chat/page.tsx's handleSend) - wired up here too so
-  // clicking a follow-up suggestion sends it exactly like typing it and hitting send.
+
   onSend: (content: string, fileIds: string[]) => void;
 }) {
   const busy = sending || !!liveInvestigationId;
-  // messages is owned by the parent page (currentMessages) - hydrated from the server only on
-  // chat load/switch, appended to directly on send and on assistant completion. Nothing in this
-  // component re-fetches or re-syncs it.
 
-  // Scroll container + the content wrapper inside it. Kept separate so a
-  // ResizeObserver can watch the *content* grow (new messages, or the live
-  // investigation trail streaming in) without a plain overflow container
-  // ever reporting a size change of its own.
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  // Whether we should keep pinning to the bottom as content grows - turned
-  // off the moment the user scrolls up to read something earlier, so a
-  // streaming answer doesn't yank them back down.
   const stickToBottomRef = useRef(true);
 
   function scrollToBottom() {
@@ -181,19 +154,11 @@ export default function MessageList({
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Opening or switching chats should land directly on the last message -
-  // no smooth-scroll animation, it should just already be in view.
   useLayoutEffect(() => {
     stickToBottomRef.current = true;
     scrollToBottom();
   }, [chatId]);
 
-  // Sending a message re-pins to the bottom even if the user had scrolled up to read earlier
-  // history - `sending` flips true for the brief window between hitting send and the request
-  // resolving (see chat/page.tsx's handleSend), which is exactly "the user just sent a message".
-  // Once pinned, the ResizeObserver below keeps it stuck to the bottom as the live investigation
-  // trail streams in and the final answer is appended, same as any other content-growth case -
-  // this effect only needs to handle the initial jump.
   useLayoutEffect(() => {
     if (sending) {
       stickToBottomRef.current = true;
@@ -215,9 +180,9 @@ export default function MessageList({
     return () => observer.disconnect();
   }, []);
 
-  // Normally the parent page swaps this whole component out for
-  // EmptyChatComposer while there are zero messages - this is just a
-  // defensive fallback (e.g. mid-refetch) so it never renders a blank pane.
+  console.log(messages)
+
+ 
   if (messages.length === 0 && !liveInvestigationId && !sending) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center text-center text-muted px-6">

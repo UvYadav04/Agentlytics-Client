@@ -23,7 +23,7 @@ const TYPE_COLOR: Record<string, string> = {
 // Anything else (status/cancelled/error, or a tool_call still awaiting its result at the tail of
 // the stream) renders as its own plain row with the usual colored dot.
 
-interface rowEvent { kind: "pair"; key: string; message: string; status: "pending" | "success" | "error" }
+interface rowEvent { kind: "pair"; key: string; message: string; status: "pending" | "success" | "error" ,parents:number}
 interface event { kind: "plain"; key: string; message: string; type: string };
 type Row =
   | event
@@ -32,6 +32,7 @@ type Row =
 function buildRows(steps: InvestigationEvent[]): Row[] {
   const rows: Row[] = [];
   const stack: number[] = [];
+  let depth = 0;
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
@@ -42,6 +43,7 @@ function buildRows(steps: InvestigationEvent[]): Row[] {
         key: `${i}`,
         message: step.message,
         status: "pending",
+        parents:stack.length
       });
 
       stack.push(rows.length - 1);
@@ -89,8 +91,7 @@ export default function InvestigationTrail({
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
   const rows = buildRows(steps);
 
-  console.log(events)
-
+  let pendings = 0;
   return (
     <ul className="mt-2 space-y-1.5 ">
       <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
@@ -100,11 +101,13 @@ export default function InvestigationTrail({
         />
         <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
       </li>
-      {rows.map((row, index) =>
-        row.kind === "pair" ? (
+      {rows.length > 0 && rows.map((row, index) =>
+      {
+        
+        return row.kind === "pair" ? (
           <li key={row.key} className="flex items-center gap-1.5 text-xs text-muted">
             <span
-              className={`size-[7px] shrink-0 rounded-full ${row.status === "pending"
+              className={`size-[7px] shrink-0 rounded-full ms-${(row as rowEvent).parents * 5} ${(row as rowEvent).status === "pending"
                 ? "animate-pulse bg-accent"
                 : row.status === "success"
                   ? "bg-accent-dark"
@@ -131,7 +134,9 @@ export default function InvestigationTrail({
             <span className="mb-[2px] whitespace-pre-line">{row.message}</span>
           </li>
         )
-      )}
+      
+      }
+        )}
     </ul>
   );
 }
