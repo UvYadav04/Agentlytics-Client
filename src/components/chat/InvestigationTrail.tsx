@@ -91,6 +91,9 @@ export default function InvestigationTrail({
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
   const rows = buildRows(steps);
 
+  console.log(events)
+  console.log(rows)
+
   let pendings = 0;
   return (
     <ul className="mt-2 space-y-1.5 ">
