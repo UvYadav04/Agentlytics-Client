@@ -78,8 +78,6 @@ function CsvFileChip({ reportId }: { reportId: string }) {
   );
 }
 
-// Generated CSV exports (generate_csv/generate_report), rendered as their own row so they're
-// distinct from the markdown report link and easy to grab directly under the message.
 function CsvFilesRow({ csvFileIds }: { csvFileIds: string[] }) {
   if (csvFileIds.length === 0) return null;
 
