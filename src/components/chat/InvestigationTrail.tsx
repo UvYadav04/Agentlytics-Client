@@ -59,6 +59,16 @@ function buildRows(steps: InvestigationEvent[]): Row[] {
 
       continue;
     }
+    
+    if (step.type === "tool_error") {
+      const rowIndex = stack.pop();
+
+      if (rowIndex !== undefined) {
+        (rows[rowIndex] as rowEvent).status = "error";
+      }
+
+      continue;
+    }
 
     rows.push({
       kind: "plain",
@@ -80,9 +90,6 @@ export default function InvestigationTrail({
   investigationId: string;
   live: boolean;
   onTerminal?: () => void;
-  // Date.now() from when the user's message was sent - see chat/page.tsx's
-  // requestStartedAt. Only meaningful (and only rendered) while `live`; a
-  // historical trail (live=false) has no "time elapsed" to show.
   startedAt?: number | null;
 }) {
   const events = useInvestigationStream(investigationId, () => {

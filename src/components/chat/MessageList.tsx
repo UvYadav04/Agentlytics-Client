@@ -180,8 +180,6 @@ export default function MessageList({
     return () => observer.disconnect();
   }, []);
 
-  console.log(messages)
-
  
   if (messages.length === 0 && !liveInvestigationId && !sending) {
     return (
