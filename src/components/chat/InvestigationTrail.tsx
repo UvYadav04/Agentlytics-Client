@@ -59,7 +59,7 @@ function buildRows(steps: InvestigationEvent[]): Row[] {
 
       continue;
     }
-    
+
     if (step.type === "tool_error") {
       const rowIndex = stack.pop();
 
@@ -98,19 +98,15 @@ export default function InvestigationTrail({
   const steps = events.filter((e) => e.type !== "answer" && e.type !== "completed");
   const rows = buildRows(steps);
 
-  console.log(events)
-  console.log(rows)
-
-  let pendings = 0;
   return (
     <ul className="mt-2 space-y-1.5 ">
-      <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
+      {live && <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
         <span
           className={`size-[7px] shrink-0 rounded-full bg-accent ${live && steps.length === 0 ? "animate-pulse" : ""
             }`}
         />
         <span className="mb-[2px]">connecting with analyzer{live && steps.length === 0 ? "..." : ""}</span>
-      </li>
+      </li>}
       {rows.length > 0 && rows.map((row, index) =>
       {
         
