@@ -48,6 +48,10 @@ export type ChatMessage = {
   investigation_id: string | null;
   chart_ids: string[];
   report_id: string | null;
+  // CSV-format Report ids generated as this message's output (generate_csv/generate_report) -
+  // kept separate from report_id (markdown reports only) so multiple CSV exports in one
+  // investigation don't clobber each other. Rendered as the "CSV Files" row in MessageList.tsx.
+  csv_file_ids: string[];
   files_used: string[];
   // 2-3 suggested next questions - only ever populated on assistant messages that went through
   // a real investigation (see shared/models/message.py's Message.follow_up_questions).

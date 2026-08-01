@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FileText } from "lucide-react";
+import { FileText, FileSpreadsheet } from "lucide-react";
 import { useGetChartQuery, useGetFilesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
 import type { ChatMessage } from "@/lib/types";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
@@ -62,6 +62,39 @@ function ReportThumb({ reportId }: { reportId: string }) {
       <span className="h-1.5 w-1.5 rounded-full bg-plum" />
       {report?.title || "Loading..."}
     </Link>
+  );
+}
+
+function CsvFileChip({ reportId }: { reportId: string }) {
+  const { data: report } = useGetReportQuery(reportId);
+  return (
+    <Link
+      href={`/report/${reportId}`}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-medium transition-colors hover:border-teal hover:bg-teal/10 hover:text-teal"
+    >
+      <FileSpreadsheet className="h-3.5 w-3.5 shrink-0" />
+      {report?.title || "Loading..."}
+    </Link>
+  );
+}
+
+// Generated CSV exports (generate_csv/generate_report), rendered as their own row so they're
+// distinct from the markdown report link and easy to grab directly under the message.
+function CsvFilesRow({ csvFileIds }: { csvFileIds: string[] }) {
+  if (csvFileIds.length === 0) return null;
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted">
+        <FileSpreadsheet className="h-3 w-3" />
+        <span>CSV Files</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {csvFileIds.map((id) => (
+          <CsvFileChip key={id} reportId={id} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -240,6 +273,8 @@ export default function MessageList({
                 <ReportThumb reportId={m.report_id} />
               </div>
             )}
+
+            {m.csv_file_ids.length > 0 && <CsvFilesRow csvFileIds={m.csv_file_ids} />}
 
             {/* Only the most recent assistant turn, and only once nothing is actively running -
                 a follow-up suggestion from three messages ago is more likely to confuse than
