@@ -9,6 +9,15 @@ import {
 } from "@/lib/api/apiSlice";
 import SidebarSection from "./SidebarSection";
 
+// FastAPI HTTPException(...) errors arrive as {data: {detail: "plain string"}} through RTK
+// Query's .unwrap() - same shape handled in login/signup/profile pages. The free-tier chat-limit
+// check (402) is the main thing this button can hit, so surface whatever detail the server sent
+// instead of letting the click silently do nothing.
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
+  return typeof data?.detail === "string" ? data.detail : fallback;
+}
+
 export default function ChatsPanel({
   workspaceId,
   selectedId,
@@ -29,6 +38,7 @@ export default function ChatsPanel({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
 
   function startRename(id: string, currentTitle: string) {
     setEditingId(id);
@@ -61,13 +71,25 @@ export default function ChatsPanel({
       <button
         disabled={creating}
         onClick={async () => {
-          const chat = await createChat({ workspaceId }).unwrap();
-          onSelect(chat.id);
+          setCreateError(null);
+          try {
+            const chat = await createChat({ workspaceId }).unwrap();
+            onSelect(chat.id);
+          } catch (err) {
+            setCreateError(
+              extractErrorMessage(err, "Couldn't start a new chat. Please try again.")
+            );
+          }
         }}
         className="mb-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border py-2 text-xs font-semibold text-muted transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark disabled:opacity-40"
       >
         + New chat
       </button>
+      {createError && (
+        <p className="mb-2.5 rounded-lg bg-gold/15 px-2.5 py-1.5 text-[11px] text-accent-dark">
+          {createError}
+        </p>
+      )}
 
       <ul className="max-h-72 space-y-1 overflow-y-auto">
         {chats.length === 0 && (

@@ -25,6 +25,14 @@ import ChatLanding from "@/components/chat/ChatLanding";
 import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
 
+// FastAPI HTTPException(...) errors arrive as {data: {detail: "plain string"}} through RTK
+// Query's .unwrap() - same shape handled in login/signup/profile pages. Used below to surface
+// the free-tier chat-limit message (402 from POST /chats) instead of failing silently.
+function extractErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
+  return typeof data?.detail === "string" ? data.detail : fallback;
+}
+
 export default function ChatPage() {
   // useSearchParams needs a Suspense boundary around it in the app router.
   return (
@@ -223,14 +231,19 @@ function ChatPageInner() {
     setStartingChat(true);
     setSending(true);
     setRequestStartedAt(Date.now());
+    setLimitMessage(null);
     const tempId = `pending-${Date.now()}`;
+    // Tracks whether createChat succeeded, so the catch block below knows whether there's an
+    // optimistic message to roll back (createChat failing - e.g. the free-tier 2-chat limit -
+    // means nothing was ever added) vs. a failure partway through sendMessage.
+    let chatCreated = false;
     try {
       const chat = await createChat({ workspaceId }).unwrap();
+      chatCreated = true;
       setChatId(chat.id);
       // Brand-new chat - nothing to hydrate from the server, so the chatId-change effect above
       // should leave currentMessages (the optimistic entry below) alone.
       hydratedChatRef.current = chat.id;
-      setLimitMessage(null);
       setCurrentMessages([
         {
           id: tempId,
@@ -259,9 +272,17 @@ function ChatPageInner() {
         setLiveInvestigationId(res.investigation_id);
       }
     } catch (err) {
-      setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
+      if (chatCreated) {
+        setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
+      }
       setRequestStartedAt(null);
-      throw err;
+      // Surface this instead of throwing - ChatLanding calls onStartChat without awaiting it, so
+      // a re-thrown error here previously became an invisible unhandled rejection (e.g. hitting
+      // the free-tier chat limit produced no feedback at all). The limitMessage banner renders
+      // above the main content regardless of chatId, so it's visible from the landing view too.
+      setLimitMessage(
+        extractErrorMessage(err, "Couldn't start this chat. Please try again.")
+      );
     } finally {
       setStartingChat(false);
       setSending(false);
@@ -270,8 +291,12 @@ function ChatPageInner() {
 
   async function handleNewChat() {
     if (!workspaceId) return;
-    const chat = await createChat({ workspaceId }).unwrap();
-    selectChat(chat.id);
+    try {
+      const chat = await createChat({ workspaceId }).unwrap();
+      selectChat(chat.id);
+    } catch (err) {
+      setLimitMessage(extractErrorMessage(err, "Couldn't start a new chat. Please try again."));
+    }
   }
 
   function handleLiveTerminal() {
