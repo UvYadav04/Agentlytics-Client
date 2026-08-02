@@ -21,6 +21,15 @@ export type ChartSummary = {
   created_at: string;
 };
 
+export type ReportSummary = {
+  id: string;
+  message_id: string;
+  title: string;
+  format: string;
+  url: string | null;
+  created_at: string;
+};
+
 export type DashboardSummary = {
   id: string;
   workspace_id: string;
@@ -164,6 +173,12 @@ export const api = createApi({
         { type: "Chart" as const, id: `WORKSPACE-${workspaceId}` },
       ],
     }),
+    getWorkspaceReports: builder.query<ReportSummary[], string>({
+      query: (workspaceId) => `/workspaces/${workspaceId}/reports`,
+      providesTags: (result, error, workspaceId) => [
+        { type: "Report" as const, id: `WORKSPACE-${workspaceId}` },
+      ],
+    }),
 
     // ---------------------------------------------------------------- files
     getFiles: builder.query<FileItem[], string>({
@@ -252,6 +267,7 @@ export const api = createApi({
         { type: "Chat", id: `LIST-${arg.workspaceId}` },
         { type: "Message", id: `LIST-${arg.chatId}` },
         { type: "Chart", id: `WORKSPACE-${arg.workspaceId}` },
+        { type: "Report", id: `WORKSPACE-${arg.workspaceId}` },
         { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
         { type: "File", id: `LIST-${arg.workspaceId}` },
       ],
@@ -378,6 +394,7 @@ export const {
   useCreateWorkspaceMutation,
   useRenameWorkspaceMutation,
   useGetWorkspaceChartsQuery,
+  useGetWorkspaceReportsQuery,
   useGetFilesQuery,
   usePresignUploadMutation,
   useConfirmUploadMutation,

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useGetDashboardsQuery, useGetWorkspaceChartsQuery } from "@/lib/api/apiSlice";
+import { FileText, FileSpreadsheet } from "lucide-react";
+import { useGetWorkspaceChartsQuery, useGetWorkspaceReportsQuery } from "@/lib/api/apiSlice";
 import SidebarSection from "./SidebarSection";
 
-export type RightSection = "dashboards" | "charts" | null;
+export type RightSection = "charts" | "reports" | "csv" | null;
 
 export default function DashboardPanel({
   workspaceId,
@@ -16,43 +17,15 @@ export default function DashboardPanel({
   onSectionChange: (section: RightSection) => void;
 }) {
   const { data: charts = [] } = useGetWorkspaceChartsQuery(workspaceId);
-  const { data: dashboards = [] } = useGetDashboardsQuery(workspaceId);
+  const { data: allReports = [] } = useGetWorkspaceReportsQuery(workspaceId);
+  // The backend stores CSV exports as Report docs too (format: "csv") - see
+  // _persist_artifacts in worker_service/tasks/investigation.py - so this one query covers
+  // both sections, split client-side by format.
+  const reports = allReports.filter((r) => r.format !== "csv");
+  const csvFiles = allReports.filter((r) => r.format === "csv");
 
   return (
     <aside className="hidden w-72 shrink-0 flex-col gap-3 overflow-y-auto p-3 lg:flex">
-      <SidebarSection
-        title="Dashboards"
-        count={dashboards.length}
-        dotColor="bg-plum"
-        open={section === "dashboards"}
-        onToggle={() => onSectionChange(section === "dashboards" ? null : "dashboards")}
-      >
-        <div className="max-h-56 space-y-1.5 overflow-y-auto">
-          {dashboards.length === 0 && (
-            <p className="px-1 py-2 text-xs text-muted">
-              No dashboards yet
-            </p>
-          )}
-          {dashboards.map((d) => (
-            <Link
-              key={d.id}
-              href={`/dashboard/${d.id}`}
-              className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-plum/10 hover:text-plum"
-            >
-              <span className="flex min-w-0 items-center gap-1.5">
-                {d.real_time && (
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" title="Real-time" />
-                )}
-                <span className="truncate">{d.name}</span>
-              </span>
-              <span className="shrink-0 rounded-full bg-border px-1.5 py-0.5 text-[10px] font-medium text-muted">
-                {d.chart_ids.length}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </SidebarSection>
-
       <SidebarSection
         title="Charts"
         count={charts.length}
@@ -77,6 +50,58 @@ export default function DashboardPanel({
               <div className="mt-0.5 text-[11px] text-muted">
                 {new Date(c.created_at).toLocaleDateString()}
               </div>
+            </Link>
+          ))}
+        </div>
+      </SidebarSection>
+
+      <SidebarSection
+        title="Reports"
+        count={reports.length}
+        dotColor="bg-plum"
+        open={section === "reports"}
+        onToggle={() => onSectionChange(section === "reports" ? null : "reports")}
+      >
+        <div className="max-h-56 space-y-1.5 overflow-y-auto">
+          {reports.length === 0 && (
+            <p className="px-1 py-2 text-xs text-muted">
+              Reports generated in this workspace will show up here.
+            </p>
+          )}
+          {reports.map((r) => (
+            <Link
+              key={r.id}
+              href={`/report/${r.id}`}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-plum/10 hover:text-plum"
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0 text-muted" />
+              <span className="truncate">{r.title}</span>
+            </Link>
+          ))}
+        </div>
+      </SidebarSection>
+
+      <SidebarSection
+        title="CSV Files"
+        count={csvFiles.length}
+        dotColor="bg-teal"
+        open={section === "csv"}
+        onToggle={() => onSectionChange(section === "csv" ? null : "csv")}
+      >
+        <div className="max-h-56 space-y-1.5 overflow-y-auto">
+          {csvFiles.length === 0 && (
+            <p className="px-1 py-2 text-xs text-muted">
+              CSV exports generated in this workspace will show up here.
+            </p>
+          )}
+          {csvFiles.map((r) => (
+            <Link
+              key={r.id}
+              href={`/report/${r.id}`}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-teal/10 hover:text-teal"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 shrink-0 text-muted" />
+              <span className="truncate">{r.title}</span>
             </Link>
           ))}
         </div>

@@ -325,6 +325,7 @@ function ChatPageInner() {
     dispatch(
       api.util.invalidateTags([
         { type: "Chart", id: `WORKSPACE-${workspaceId}` },
+        { type: "Report", id: `WORKSPACE-${workspaceId}` },
         { type: "Dashboard", id: `LIST-${workspaceId}` },
         "Usage",
       ])
