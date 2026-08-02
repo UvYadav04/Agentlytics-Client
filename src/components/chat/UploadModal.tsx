@@ -9,6 +9,21 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+// Instant client-side feedback only - the real, authoritative limit is enforced server-side in
+// api_service/routers/files.py's presign_upload (shared/upload_limits.py, MAX_DOCUMENT_UPLOAD_MB,
+// default 25MB) since this constant could drift or be bypassed entirely. PDF/txt specifically
+// because they're read in full for RAG, unlike CSV/XLSX which stream more incrementally.
+const LIMITED_TYPE_MB: Record<string, number> = { pdf: 25, txt: 25 };
+
+function oversizedReason(file: File): string | null {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  const limitMb = ext ? LIMITED_TYPE_MB[ext] : undefined;
+  if (!limitMb) return null;
+  const limitBytes = limitMb * 1024 * 1024;
+  if (file.size <= limitBytes) return null;
+  return `Exceeds the ${limitMb}MB limit for .${ext} files`;
+}
+
 /**
  * Selection-only step. Picking files here doesn't upload anything - it just
  * stages metadata (name, size) for the user to confirm or cancel. Actual
@@ -35,8 +50,10 @@ export default function UploadModal({
     setSelected((prev) => prev.filter((_, i) => i !== idx));
   }
 
+  const hasOversized = selected.some((f) => oversizedReason(f) !== null);
+
   function confirm() {
-    if (selected.length === 0) return;
+    if (selected.length === 0 || hasOversized) return;
     onConfirm(selected);
     onClose();
   }
@@ -90,24 +107,31 @@ export default function UploadModal({
 
         {selected.length > 0 && (
           <ul className="mt-4 max-h-56 space-y-2 overflow-y-auto">
-            {selected.map((f, i) => (
-              <li
-                key={`${f.name}-${f.size}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-lg border border-border bg-bg/60 px-3 py-2 text-sm"
-              >
-                <div className="min-w-0">
-                  <div className="truncate font-medium">{f.name}</div>
-                  <div className="text-xs text-muted">{formatBytes(f.size)}</div>
-                </div>
-                <button
-                  onClick={() => removeFile(i)}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted hover:bg-rust/15 hover:text-rust"
-                  title="Remove"
+            {selected.map((f, i) => {
+              const reason = oversizedReason(f);
+              return (
+                <li
+                  key={`${f.name}-${f.size}-${i}`}
+                  className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
+                    reason ? "border-rust/40 bg-rust/5" : "border-border bg-bg/60"
+                  }`}
                 >
-                  &times;
-                </button>
-              </li>
-            ))}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{f.name}</div>
+                    <div className={`text-xs ${reason ? "text-rust" : "text-muted"}`}>
+                      {reason ?? formatBytes(f.size)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeFile(i)}
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted hover:bg-rust/15 hover:text-rust"
+                    title="Remove"
+                  >
+                    &times;
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -120,7 +144,8 @@ export default function UploadModal({
           </button>
           <button
             onClick={confirm}
-            disabled={selected.length === 0}
+            disabled={selected.length === 0 || hasOversized}
+            title={hasOversized ? "Remove oversized files before uploading" : undefined}
             className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark hover:shadow-[0_0_20px_-6px_rgba(204,120,92,0.7)] disabled:opacity-40 disabled:hover:shadow-none"
           >
             {selected.length > 0
