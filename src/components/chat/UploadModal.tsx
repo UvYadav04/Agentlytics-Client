@@ -91,13 +91,13 @@ export default function UploadModal({
           </div>
           <span className="font-medium text-text">Drag &amp; drop files here</span>, or click to
           browse
-          <div className="mt-1 text-xs">.csv, .xlsx</div>
+          <div className="mt-1 text-xs">.csv, .xlsx, .pdf, .txt</div>
           <input
             ref={inputRef}
             type="file"
             multiple
             className="hidden"
-            accept=".csv,.xlsx"
+            accept=".csv,.xlsx,.pdf,.txt"
             onChange={(e) => {
               addFiles(e.target.files);
               e.target.value = "";

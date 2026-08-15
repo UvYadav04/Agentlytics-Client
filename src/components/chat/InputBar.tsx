@@ -98,7 +98,7 @@ export default function InputBar({
 
   function submit() {
     const trimmed = value.trim();
-    if (!trimmed || disabled) return;
+    if (!trimmed || disabled || busy) return;
     onSend(
       trimmed,
       mentionedFiles.map((f) => f.id)

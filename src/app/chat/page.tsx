@@ -168,6 +168,11 @@ function ChatPageInner() {
 
   function selectChat(id: string | null) {
     setChatId(id);
+    // Cleared synchronously here (not left to the hydrate effect below, which only runs a tick
+    // later) so switching chats never briefly renders the previous chat's messages under the
+    // new chatId - the hydrate effect still re-populates this once the new chat's own messages
+    // (if any) have loaded, since hydratedChatRef.current still points at the old chat id.
+    setCurrentMessages([]);
     setLiveInvestigationId(null);
     setLimitMessage(null);
     setRequestStartedAt(null);
