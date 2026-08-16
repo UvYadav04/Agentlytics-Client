@@ -155,8 +155,14 @@ function ChatPageInner() {
     hydratedChatRef.current = chatId;
   }, [chatId, chatMessages, messagesLoading]);
 
+  // Defensive filter, independent of the hydrate effect above: guarantees a message from a
+  // chat_id other than the one currently selected can never render, even for a single frame -
+  // covers any timing edge case in the hydrate effect (e.g. a stale RTK Query isLoading read on
+  // the render right after switching chats) rather than relying on that effect's ordering alone.
+  const visibleMessages = currentMessages.filter((m) => m.chat_id === chatId);
+
   const showEmptyComposer =
-    !!chatId && !messagesLoading && currentMessages.length === 0 && !liveInvestigationId && !sending;
+    !!chatId && !messagesLoading && visibleMessages.length === 0 && !liveInvestigationId && !sending;
 
   function selectWorkspace(id: string) {
     setWorkspaceId(id);
@@ -415,7 +421,7 @@ function ChatPageInner() {
             <MessageList
               chatId={chatId}
               workspaceId={workspaceId}
-              messages={currentMessages}
+              messages={visibleMessages}
               liveInvestigationId={liveInvestigationId}
               sending={sending}
               requestStartedAt={requestStartedAt}

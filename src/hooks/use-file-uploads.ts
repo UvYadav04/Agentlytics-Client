@@ -96,6 +96,10 @@ export function useFileUploads(workspaceId: string) {
 
   const startUploads = useCallback(
     (files: File[]) => {
+      // Shared by every file picked in this one "Upload" click, so the server can tell which
+      // files belong together - see worker_service/tasks/ingestion.py's rollback-on-size-failure
+      // logic, which only rolls back siblings sharing this id.
+      const batchId = makeId();
       files.forEach((file) => {
         const id = makeId();
         setUploads((prev) => [...prev, { id, file, progress: 0, status: "uploading" }]);
@@ -108,6 +112,7 @@ export function useFileUploads(workspaceId: string) {
               filename: file.name,
               contentType: file.type || "application/octet-stream",
               sizeBytes: file.size,
+              batchId,
             }).unwrap();
 
             patch(id, { fileId: presign.file_id });

@@ -193,12 +193,12 @@ export const api = createApi({
     }),
     presignUpload: builder.mutation<
       PresignResult,
-      { workspaceId: string; filename: string; contentType: string; sizeBytes: number }
+      { workspaceId: string; filename: string; contentType: string; sizeBytes: number; batchId?: string }
     >({
-      query: ({ workspaceId, filename, contentType, sizeBytes }) => ({
+      query: ({ workspaceId, filename, contentType, sizeBytes, batchId }) => ({
         url: `/workspaces/${workspaceId}/files/presign`,
         method: "POST",
-        body: { filename, content_type: contentType, size_bytes: sizeBytes },
+        body: { filename, content_type: contentType, size_bytes: sizeBytes, batch_id: batchId },
       }),
       invalidatesTags: (result, error, arg) => [
         { type: "File", id: `LIST-${arg.workspaceId}` },

@@ -15,7 +15,17 @@ function formatBytes(bytes: number) {
 // because they're read in full for RAG, unlike CSV/XLSX which stream more incrementally.
 const LIMITED_TYPE_MB: Record<string, number> = { pdf: 25, txt: 25 };
 
-function oversizedReason(file: File): string | null {
+// Kept in sync with Server/analyzerEngine/ingestion/file_types/pdf/pdf_ingestor.py's
+// MAX_PDF_PAGES, which re-checks this server-side (this client check can be skipped entirely by
+// calling the API directly). A page count this high is also what tends to push a single PDF's
+// chunks past what the vector store will accept in one upsert - see PDFIngestor.ingest().
+const MAX_PDF_PAGES = 30;
+
+function fileKey(f: File) {
+  return `${f.name}-${f.size}-${f.lastModified}`;
+}
+
+function sizeReason(file: File): string | null {
   const ext = file.name.split(".").pop()?.toLowerCase();
   const limitMb = ext ? LIMITED_TYPE_MB[ext] : undefined;
   if (!limitMb) return null;
@@ -39,21 +49,58 @@ export default function UploadModal({
   onConfirm: (files: File[]) => void;
 }) {
   const [selected, setSelected] = useState<File[]>([]);
+  // PDF page counts, read asynchronously via pdf-lib as files are added. "checking" while the
+  // read is in flight, "error" if the PDF couldn't be parsed at all (blocked either way, same as
+  // an oversized file - safer than silently letting an unreadable PDF through).
+  const [pdfPageCounts, setPdfPageCounts] = useState<Record<string, number | "checking" | "error">>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   function addFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
-    setSelected((prev) => [...prev, ...Array.from(fileList)]);
+    const files = Array.from(fileList);
+    setSelected((prev) => [...prev, ...files]);
+
+    files.forEach((f) => {
+      const ext = f.name.split(".").pop()?.toLowerCase();
+      if (ext !== "pdf") return;
+      const key = fileKey(f);
+      setPdfPageCounts((prev) => ({ ...prev, [key]: "checking" }));
+      f.arrayBuffer()
+        .then(async (buf) => {
+          const { PDFDocument } = await import("pdf-lib");
+          const doc = await PDFDocument.load(buf, { ignoreEncryption: true });
+          setPdfPageCounts((prev) => ({ ...prev, [key]: doc.getPageCount() }));
+        })
+        .catch(() => {
+          setPdfPageCounts((prev) => ({ ...prev, [key]: "error" }));
+        });
+    });
   }
 
   function removeFile(idx: number) {
     setSelected((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const hasOversized = selected.some((f) => oversizedReason(f) !== null);
+  function blockingReason(file: File): string | null {
+    const sizeIssue = sizeReason(file);
+    if (sizeIssue) return sizeIssue;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "pdf") return null;
+
+    const count = pdfPageCounts[fileKey(file)];
+    if (count === "checking") return "Checking page count...";
+    if (count === "error") return "Couldn't read this PDF";
+    if (typeof count === "number" && count > MAX_PDF_PAGES) {
+      return `Too large - ${count} pages exceeds the ${MAX_PDF_PAGES}-page limit for PDFs`;
+    }
+    return null;
+  }
+
+  const hasBlocking = selected.some((f) => blockingReason(f) !== null);
 
   function confirm() {
-    if (selected.length === 0 || hasOversized) return;
+    if (selected.length === 0 || hasBlocking) return;
     onConfirm(selected);
     onClose();
   }
@@ -108,17 +155,20 @@ export default function UploadModal({
         {selected.length > 0 && (
           <ul className="mt-4 max-h-56 space-y-2 overflow-y-auto">
             {selected.map((f, i) => {
-              const reason = oversizedReason(f);
+              const reason = blockingReason(f);
+              const isChecking = reason === "Checking page count...";
               return (
                 <li
                   key={`${f.name}-${f.size}-${i}`}
                   className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
-                    reason ? "border-rust/40 bg-rust/5" : "border-border bg-bg/60"
+                    reason && !isChecking
+                      ? "border-rust/40 bg-rust/5"
+                      : "border-border bg-bg/60"
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="truncate font-medium">{f.name}</div>
-                    <div className={`text-xs ${reason ? "text-rust" : "text-muted"}`}>
+                    <div className={`text-xs ${reason && !isChecking ? "text-rust" : "text-muted"}`}>
                       {reason ?? formatBytes(f.size)}
                     </div>
                   </div>
@@ -144,8 +194,8 @@ export default function UploadModal({
           </button>
           <button
             onClick={confirm}
-            disabled={selected.length === 0 || hasOversized}
-            title={hasOversized ? "Remove oversized files before uploading" : undefined}
+            disabled={selected.length === 0 || hasBlocking}
+            title={hasBlocking ? "Remove or wait on flagged files before uploading" : undefined}
             className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark hover:shadow-[0_0_20px_-6px_rgba(204,120,92,0.7)] disabled:opacity-40 disabled:hover:shadow-none"
           >
             {selected.length > 0

@@ -155,10 +155,15 @@ export default function FilesPanel({
                         : "bg-border"
                 }`}
               />
-              <span className="flex-1 truncate text-sm" title={f.filename}>
+              <span className="flex-1 truncate text-sm" title={f.dummy ? `${f.filename} (sample file)` : f.filename}>
                 {f.filename}
               </span>
               <span className="flex shrink-0 items-center gap-1.5">
+                {f.dummy && (
+                  <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
+                    Sample
+                  </span>
+                )}
                 <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_COLOR[f.status]}`}
                 >
