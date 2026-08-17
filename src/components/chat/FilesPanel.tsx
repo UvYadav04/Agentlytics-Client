@@ -25,6 +25,26 @@ const STATUS_COLOR: Record<FileItem["status"], string> = {
 
 const PROCESSING_STATUSES = new Set<FileItem["status"]>(["pending_upload", "processing"]);
 
+type SortOption = "date" | "az" | "za";
+
+const SORT_LABEL: Record<SortOption, string> = {
+  date: "Date (newest)",
+  az: "Name (A → Z)",
+  za: "Name (Z → A)",
+};
+
+function sortFiles(files: FileItem[], sortBy: SortOption): FileItem[] {
+  const sorted = [...files];
+  if (sortBy === "az") {
+    sorted.sort((a, b) => a.filename.localeCompare(b.filename));
+  } else if (sortBy === "za") {
+    sorted.sort((a, b) => b.filename.localeCompare(a.filename));
+  } else {
+    sorted.sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+  }
+  return sorted;
+}
+
 function formatBytes(bytes: number) {
   if (!bytes) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
@@ -43,6 +63,9 @@ export default function FilesPanel({
 }) {
   const [showUpload, setShowUpload] = useState(false);
   const [poll, setPoll] = useState(true);
+  // Default is "date" (newest first) - matches upload order, which is what most people expect
+  // to see first. Purely a client-side display preference, not persisted server-side.
+  const [sortBy, setSortBy] = useState<SortOption>("date");
 
   const { data: files = [] } = useGetFilesQuery(workspaceId, {
     pollingInterval: poll ? 3000 : 0,
@@ -57,7 +80,7 @@ export default function FilesPanel({
   const activeUploadFileIds = new Set(
     uploads.map((u) => u.fileId).filter((id): id is string => !!id)
   );
-  const visibleFiles = files.filter((f) => !activeUploadFileIds.has(f.id));
+  const visibleFiles = sortFiles(files.filter((f) => !activeUploadFileIds.has(f.id)), sortBy);
 
   return (
     <>
@@ -75,6 +98,26 @@ export default function FilesPanel({
         >
           + Add file
         </button>
+
+        {visibleFiles.length > 1 && (
+          <div className="mb-1.5 flex items-center justify-end gap-1.5">
+            <label htmlFor="files-sort" className="text-[10px] text-muted">
+              Sort
+            </label>
+            <select
+              id="files-sort"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="rounded-md border border-border bg-bg/60 px-1.5 py-0.5 text-[10px] text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              {(Object.keys(SORT_LABEL) as SortOption[]).map((option) => (
+                <option key={option} value={option}>
+                  {SORT_LABEL[option]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <ul className="max-h-64 space-y-1.5 overflow-y-auto">
           {uploads.length === 0 && visibleFiles.length === 0 && (
