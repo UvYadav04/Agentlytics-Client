@@ -17,6 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+       <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_CONTENT} />
+      </head>
       <body className="min-h-screen bg-bg text-text font-sans antialiased">
         <ReduxProvider>
           <CanvasCursor />
