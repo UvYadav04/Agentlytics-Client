@@ -32,6 +32,8 @@ export type FileItem = {
   row_count: number | null;
   page_count: number | null;
   dummy: boolean;
+  pages_done: number | null;
+  pages_total: number | null;
 };
 
 export type Chat = {

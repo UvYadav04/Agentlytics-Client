@@ -42,9 +42,6 @@ export default function FilesPanel({
   onToggle: () => void;
 }) {
   const [showUpload, setShowUpload] = useState(false);
-  // Starts true so a freshly-opened panel polls until we actually know
-  // nothing's processing; RTK Query re-evaluates pollingInterval every
-  // render, so this settles down automatically once files load.
   const [poll, setPoll] = useState(true);
 
   const { data: files = [] } = useGetFilesQuery(workspaceId, {
@@ -57,10 +54,6 @@ export default function FilesPanel({
     setPoll(files.some((f) => PROCESSING_STATUSES.has(f.status)));
   }, [files]);
 
-  // While a local upload is active its backend row (status "pending_upload")
-  // has no real-time percentage, so hide it in favor of the progress bar
-  // below - once the upload settles it's removed from `uploads` and the
-  // polled row (by then "processing"/"ready"/"failed") takes over.
   const activeUploadFileIds = new Set(
     uploads.map((u) => u.fileId).filter((id): id is string => !!id)
   );
@@ -75,6 +68,7 @@ export default function FilesPanel({
         open={open}
         onToggle={onToggle}
       >
+        <p className="text-[10px] text-muted opacity-80">Use pdf files with tables or text. Avoid visuals.</p>
         <button
           onClick={() => setShowUpload(true)}
           className="mb-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border py-2 text-xs font-semibold text-muted transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark"
@@ -139,46 +133,66 @@ export default function FilesPanel({
             </li>
           ))}
 
-          {visibleFiles.map((f) => (
-            <li
-              key={f.id}
-              className="group flex items-center gap-2 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-bg"
-            >
-              <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                  f.status === "ready"
-                    ? "bg-accent"
-                    : f.status === "failed"
-                      ? "bg-rust"
-                      : PROCESSING_STATUSES.has(f.status)
-                        ? "animate-pulse bg-gold"
-                        : "bg-border"
-                }`}
-              />
-              <span className="flex-1 truncate text-sm" title={f.dummy ? `${f.filename} (sample file)` : f.filename}>
-                {f.filename}
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
-                {f.dummy && (
-                  <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
-                    Sample
+          {visibleFiles.map((f) => {
+            const showPageProgress = f.status === "processing" && !!f.pages_total;
+            const statusLabel = showPageProgress
+              ? `${f.pages_done ?? 0}/${f.pages_total} pages`
+              : STATUS_LABEL[f.status];
+            const progressPct = showPageProgress
+              ? Math.min(100, Math.round(((f.pages_done ?? 0) / (f.pages_total || 1)) * 100))
+              : 0;
+
+            return (
+              <li
+                key={f.id}
+                className="group rounded-lg px-1.5 py-1.5 transition-colors hover:bg-bg"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                      f.status === "ready"
+                        ? "bg-accent"
+                        : f.status === "failed"
+                          ? "bg-rust"
+                          : PROCESSING_STATUSES.has(f.status)
+                            ? "animate-pulse bg-gold"
+                            : "bg-border"
+                    }`}
+                  />
+                  <span className="flex-1 truncate text-sm" title={f.dummy ? `${f.filename} (sample file)` : f.filename}>
+                    {f.filename}
                   </span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    {f.dummy && (
+                      <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
+                        Sample
+                      </span>
+                    )}
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_COLOR[f.status]}`}
+                    >
+                      {statusLabel}
+                    </span>
+                    <button
+                      className="hidden h-4 w-4 items-center justify-center rounded-full text-[10px] text-muted hover:bg-rust/15 hover:text-rust group-hover:flex"
+                      title="Delete"
+                      onClick={() => deleteFile({ fileId: f.id, workspaceId })}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                </div>
+                {showPageProgress && (
+                  <div className="ml-3.5 mt-1 h-1 overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full bg-gold transition-all"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
                 )}
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_COLOR[f.status]}`}
-                >
-                  {STATUS_LABEL[f.status]}
-                </span>
-                <button
-                  className="hidden h-4 w-4 items-center justify-center rounded-full text-[10px] text-muted hover:bg-rust/15 hover:text-rust group-hover:flex"
-                  title="Delete"
-                  onClick={() => deleteFile({ fileId: f.id, workspaceId })}
-                >
-                  &times;
-                </button>
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </SidebarSection>
 
