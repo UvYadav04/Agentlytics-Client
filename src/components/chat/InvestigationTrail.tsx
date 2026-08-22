@@ -113,7 +113,8 @@ export default function InvestigationTrail({
         return row.kind === "pair" ? (
           <li key={row.key} className="flex items-center gap-1.5 text-xs text-muted">
             <span
-              className={`size-[7px] shrink-0 rounded-full ms-${(row as rowEvent).parents * 5} ${(row as rowEvent).status === "pending"
+              style={{ marginInlineStart: (row as rowEvent).parents * 20 }}
+              className={`size-[7px] shrink-0 rounded-full ${(row as rowEvent).status === "pending"
                 ? "animate-pulse bg-accent"
                 : row.status === "success"
                   ? "bg-accent-dark"
