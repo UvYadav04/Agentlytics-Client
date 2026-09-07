@@ -19,6 +19,7 @@ export default function SidebarSection({
   dotColor = "bg-accent",
   open,
   onToggle,
+  headerExtra,
   children,
 }: {
   title: string;
@@ -26,6 +27,7 @@ export default function SidebarSection({
   dotColor?: string;
   open: boolean;
   onToggle: () => void;
+  headerExtra?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -34,12 +36,19 @@ export default function SidebarSection({
         open ? "border-accent/25 shadow-card" : "border-border shadow-none"
       }`}
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onToggle}
-        className="flex w-full cursor-pointer select-none items-center justify-between px-3.5 py-3 text-xs font-semibold uppercase tracking-wide text-muted outline-none hover:text-text"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        className="flex w-full cursor-pointer select-none items-center justify-between gap-2 px-3.5 py-3 text-xs font-semibold uppercase tracking-wide text-muted outline-none hover:text-text"
       >
-        <span className="flex items-center gap-1.5">
+        <span className="flex min-w-0 items-center gap-1.5">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
           {title}
           {typeof count === "number" && (
@@ -48,12 +57,19 @@ export default function SidebarSection({
             </span>
           )}
         </span>
-        <ChevronRight
-          className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${
-            open ? "rotate-90" : "rotate-0"
-          }`}
-        />
-      </button>
+        <span className="flex shrink-0 items-center gap-2">
+          {headerExtra && (
+            <span onClick={(e) => e.stopPropagation()} className="normal-case">
+              {headerExtra}
+            </span>
+          )}
+          <ChevronRight
+            className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${
+              open ? "rotate-90" : "rotate-0"
+            }`}
+          />
+        </span>
+      </div>
       {open && (
         <div className="border-t border-border/70 px-3 pb-3 pt-2.5">{children}</div>
       )}

@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConfirmUploadMutation, usePresignUploadMutation } from "@/lib/api/apiSlice";
+import {
+  useConfirmUploadMutation,
+  useFailUploadMutation,
+  usePresignUploadMutation,
+} from "@/lib/api/apiSlice";
 import { API_BASE_URL } from "@/lib/config";
 
 export type UploadStatus = "uploading" | "confirming" | "done" | "error" | "cancelled";
@@ -40,6 +44,7 @@ export function useFileUploads(workspaceId: string) {
   const [uploads, setUploads] = useState<InternalItem[]>([]);
   const [presignUpload] = usePresignUploadMutation();
   const [confirmUpload] = useConfirmUploadMutation();
+  const [failUpload] = useFailUploadMutation();
 
   // Backend file_ids currently mid-upload (PUT to S3 in flight, or waiting on /confirm) - kept as
   // a ref rather than derived from `uploads` state so the beforeunload/pagehide listeners below
@@ -106,6 +111,7 @@ export function useFileUploads(workspaceId: string) {
 
         (async () => {
           let settleDelay = 2000;
+          let currentFileId: string | undefined;
           try {
             const presign = await presignUpload({
               workspaceId,
@@ -115,6 +121,7 @@ export function useFileUploads(workspaceId: string) {
               batchId,
             }).unwrap();
 
+            currentFileId = presign.file_id;
             patch(id, { fileId: presign.file_id });
             activeFileIdsRef.current.add(presign.file_id);
 
@@ -144,24 +151,22 @@ export function useFileUploads(workspaceId: string) {
           } catch (err) {
             const message = err instanceof Error ? err.message : "error";
             settleDelay = 4000;
+            const cancelled = message === "cancelled";
             patch(id, {
-              status: message === "cancelled" ? "cancelled" : "error",
+              status: cancelled ? "cancelled" : "error",
               error: message,
             });
+            if (!cancelled && currentFileId) {
+              failUpload({ fileId: currentFileId, workspaceId, error: message }).catch(() => {});
+            }
           } finally {
-            // Whatever fileId this upload had (if it got that far) is no longer in flight either
-            // way - success, error, or abandoned mid-PUT before even confirming.
-            setUploads((prev) => {
-              const fileId = prev.find((u) => u.id === id)?.fileId;
-              if (fileId) activeFileIdsRef.current.delete(fileId);
-              return prev;
-            });
+            if (currentFileId) activeFileIdsRef.current.delete(currentFileId);
             setTimeout(() => remove(id), settleDelay);
           }
         })();
       });
     },
-    [workspaceId, presignUpload, confirmUpload, patch, remove]
+    [workspaceId, presignUpload, confirmUpload, failUpload, patch, remove]
   );
 
   const cancelUpload = useCallback(

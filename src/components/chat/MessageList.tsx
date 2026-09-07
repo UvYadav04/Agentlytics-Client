@@ -272,7 +272,7 @@ export default function MessageList({
               </div>
             )}
 
-            {m.csv_file_ids.length > 0 && <CsvFilesRow csvFileIds={m.csv_file_ids} />}
+            {m.csv_file_ids?.length > 0 && <CsvFilesRow csvFileIds={m.csv_file_ids} />}
 
             {/* Only the most recent assistant turn, and only once nothing is actively running -
                 a follow-up suggestion from three messages ago is more likely to confuse than

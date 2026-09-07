@@ -90,6 +90,23 @@ export default function FilesPanel({
         dotColor="bg-accent"
         open={open}
         onToggle={onToggle}
+        headerExtra={
+          open && visibleFiles.length > 1 ? (
+            <select
+              aria-label="Sort files"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-md border border-border bg-bg/60 px-1.5 py-0.5 text-[10px] normal-case text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              {(Object.keys(SORT_LABEL) as SortOption[]).map((option) => (
+                <option key={option} value={option}>
+                  {SORT_LABEL[option]}
+                </option>
+              ))}
+            </select>
+          ) : undefined
+        }
       >
         <p className="text-[10px] text-muted opacity-80">Use pdf files with tables or text. Avoid visuals.</p>
         <button
@@ -98,26 +115,6 @@ export default function FilesPanel({
         >
           + Add file
         </button>
-
-        {visibleFiles.length > 1 && (
-          <div className="mb-1.5 flex items-center justify-end gap-1.5">
-            <label htmlFor="files-sort" className="text-[10px] text-muted">
-              Sort
-            </label>
-            <select
-              id="files-sort"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-md border border-border bg-bg/60 px-1.5 py-0.5 text-[10px] text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              {(Object.keys(SORT_LABEL) as SortOption[]).map((option) => (
-                <option key={option} value={option}>
-                  {SORT_LABEL[option]}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <ul className="max-h-64 space-y-1.5 overflow-y-auto">
           {uploads.length === 0 && visibleFiles.length === 0 && (
@@ -216,13 +213,15 @@ export default function FilesPanel({
                     >
                       {statusLabel}
                     </span>
-                    <button
-                      className="hidden h-4 w-4 items-center justify-center rounded-full text-[10px] text-muted hover:bg-rust/15 hover:text-rust group-hover:flex"
-                      title="Delete"
-                      onClick={() => deleteFile({ fileId: f.id, workspaceId })}
-                    >
-                      &times;
-                    </button>
+                    {!f.dummy && (
+                      <button
+                        className="hidden h-4 w-4 items-center justify-center rounded-full text-[10px] text-muted hover:bg-rust/15 hover:text-rust group-hover:flex"
+                        title="Delete"
+                        onClick={() => deleteFile({ fileId: f.id, workspaceId })}
+                      >
+                        &times;
+                      </button>
+                    )}
                   </span>
                 </div>
                 {showPageProgress && (

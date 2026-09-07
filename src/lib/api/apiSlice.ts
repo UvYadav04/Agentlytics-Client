@@ -218,6 +218,13 @@ export const api = createApi({
         { type: "File", id: `LIST-${arg.workspaceId}` },
       ],
     }),
+    failUpload: builder.mutation<FileItem, { fileId: string; workspaceId: string; error?: string }>({
+      query: ({ fileId, error }) => ({ url: `/files/${fileId}/fail`, method: "POST", body: { error } }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "File", id: arg.fileId },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
     deleteFile: builder.mutation<{ ok: boolean }, { fileId: string; workspaceId: string }>({
       query: ({ fileId }) => ({ url: `/files/${fileId}`, method: "DELETE" }),
       invalidatesTags: (result, error, arg) => [
@@ -399,6 +406,7 @@ export const {
   usePresignUploadMutation,
   useConfirmUploadMutation,
   useCancelUploadMutation,
+  useFailUploadMutation,
   useDeleteFileMutation,
   useGetChatsQuery,
   useCreateChatMutation,
