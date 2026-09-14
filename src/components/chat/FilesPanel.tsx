@@ -6,6 +6,7 @@ import { useDeleteFileMutation, useGetFilesQuery } from "@/lib/api/apiSlice";
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import UploadModal from "./UploadModal";
 import SidebarSection from "./SidebarSection";
+import { Trash } from "lucide-react";
 
 const STATUS_LABEL: Record<FileItem["status"], string> = {
   pending_upload: "Uploading",
@@ -219,7 +220,7 @@ export default function FilesPanel({
                         title="Delete"
                         onClick={() => deleteFile({ fileId: f.id, workspaceId })}
                       >
-                        &times;
+                        <Trash size={16}/>
                       </button>
                     )}
                   </span>

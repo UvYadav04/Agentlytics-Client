@@ -8,6 +8,7 @@ import {
   useRenameChatMutation,
 } from "@/lib/api/apiSlice";
 import SidebarSection from "./SidebarSection";
+import { Pencil, Trash } from "lucide-react";
 
 // FastAPI HTTPException(...) errors arrive as {data: {detail: "plain string"}} through RTK
 // Query's .unwrap() - same shape handled in login/signup/profile pages. The free-tier chat-limit
@@ -143,7 +144,7 @@ export default function ChatsPanel({
                     startRename(c.id, c.title);
                   }}
                 >
-                  &#9998;
+                  <Pencil size={16}/>
                 </button>
                 <button
                   className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] text-muted hover:bg-rust/15 hover:text-rust"
@@ -153,7 +154,7 @@ export default function ChatsPanel({
                     handleDelete(c.id);
                   }}
                 >
-                  &times;
+                  <Trash size={16}/>
                 </button>
               </span>
             )}
