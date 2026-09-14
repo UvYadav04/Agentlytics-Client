@@ -130,7 +130,6 @@ export function useFileUploads(workspaceId: string) {
 
             await new Promise<void>((resolve, reject) => {
               xhr.open("PUT", presign.upload_url);
-              xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
               xhr.upload.onprogress = (evt) => {
                 if (evt.lengthComputable) {
                   patch(id, { progress: Math.round((evt.loaded / evt.total) * 100) });
