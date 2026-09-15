@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useGetReportQuery } from "@/lib/api/apiSlice";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 
 // Past this many data rows, rendering the full table gets sluggish and mostly unreadable anyway
@@ -135,7 +136,8 @@ function CsvTable({ url }: { url: string }) {
 
 export default function ReportPage() {
   const params = useParams<{ id: string }>();
-  const { data: report, isError, isLoading } = useGetReportQuery(params.id);
+  const authReady = useRequireAuth();
+  const { data: report, isError, isLoading } = useGetReportQuery(params.id, { skip: !authReady });
   const [markdown, setMarkdown] = useState<string | null>(null);
 
   useEffect(() => {
@@ -147,6 +149,7 @@ export default function ReportPage() {
     }
   }, [report?.format, report?.url]);
 
+  if (!authReady) return <div className="p-10 text-center text-muted">Loading...</div>;
   if (isError) return <div className="p-10 text-center text-rust">Failed to load report</div>;
   if (isLoading || !report) return <div className="p-10 text-center text-muted">Loading...</div>;
 

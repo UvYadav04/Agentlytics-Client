@@ -2,13 +2,18 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useGetChartQuery } from "@/lib/api/apiSlice";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 
 export default function ChartPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: chart, isError, isLoading } = useGetChartQuery(params.id);
+  const authReady = useRequireAuth();
+  const { data: chart, isError, isLoading } = useGetChartQuery(params.id, { skip: !authReady });
 
+  if (!authReady) {
+    return <div className="p-10 text-center text-muted">Loading...</div>;
+  }
   if (isError) {
     return <div className="p-10 text-center text-rust">Failed to load chart</div>;
   }

@@ -8,6 +8,7 @@ import {
   useRefreshDashboardMutation,
   useRelinkDashboardFileMutation,
 } from "@/lib/api/apiSlice";
+import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 
 function timeAgo(iso: string) {
@@ -81,12 +82,14 @@ function DataSourceRow({
 export default function DashboardDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: dashboard, isError, isLoading } = useGetDashboardQuery(params.id);
+  const authReady = useRequireAuth();
+  const { data: dashboard, isError, isLoading } = useGetDashboardQuery(params.id, { skip: !authReady });
   const { data: files = [] } = useGetFilesQuery(dashboard?.workspace_id ?? "", {
     skip: !dashboard?.workspace_id,
   });
   const [refresh, { isLoading: isRefreshing }] = useRefreshDashboardMutation();
 
+  if (!authReady) return <div className="p-10 text-center text-muted">Loading...</div>;
   if (isError) return <div className="p-10 text-center text-rust">Failed to load dashboard</div>;
   if (isLoading || !dashboard) return <div className="p-10 text-center text-muted">Loading...</div>;
 
