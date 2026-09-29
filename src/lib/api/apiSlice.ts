@@ -5,6 +5,12 @@ import type {
   ChatMessage,
   ChartDetail,
   DashboardDetail,
+  DashboardShare,
+  DashboardSummary,
+  DashboardTheme,
+  LiveDashboardData,
+  SharedDashboard,
+  TimeWindowUnit,
   DatabaseConnection,
   DatabaseConnectionDetail,
   DatabaseTestResult,
@@ -35,16 +41,6 @@ export type ReportSummary = {
   created_at: string;
 };
 
-export type DashboardSummary = {
-  id: string;
-  workspace_id: string;
-  name: string;
-  chart_ids: string[];
-  created_at: string;
-  real_time: boolean;
-  file_ids: string[];
-  last_refreshed_at: string | null;
-};
 
 export type SendMessageResult = {
   message_id: string | null;
@@ -95,6 +91,7 @@ export const api = createApi({
     "Dashboard",
     "Usage",
     "Database",
+    "DashboardShare",
   ],
   endpoints: (builder) => ({
     getMe: builder.query<User, void>({
@@ -308,6 +305,56 @@ export const api = createApi({
       query: (id) => `/dashboards/${id}`,
       providesTags: (result, error, id) => [{ type: "Dashboard", id }],
     }),
+    getDashboardData: builder.query<LiveDashboardData, string>({
+      query: (id) => `/dashboards/${id}/data`,
+      keepUnusedDataFor: 0,
+    }),
+    updateDashboard: builder.mutation<
+      DashboardSummary,
+      {
+        dashboardId: string;
+        workspaceId: string;
+        name?: string;
+        theme?: Partial<Pick<DashboardTheme, "mode" | "show_legend" | "show_grid">>;
+        timeWindow?: { last: number; unit: TimeWindowUnit };
+      }
+    >({
+      query: ({ dashboardId, name, theme, timeWindow }) => ({
+        url: `/dashboards/${dashboardId}`,
+        method: "PATCH",
+        body: { name: name ?? null, theme: theme ?? null, time_window: timeWindow ?? null },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Dashboard", id: arg.dashboardId },
+        { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    getDashboardShares: builder.query<DashboardShare[], string>({
+      query: (dashboardId) => `/dashboards/${dashboardId}/shares`,
+      providesTags: (result, error, dashboardId) => [{ type: "DashboardShare", id: dashboardId }],
+    }),
+    createDashboardShare: builder.mutation<
+      DashboardShare,
+      { dashboardId: string; emails: string[]; validDays: number }
+    >({
+      query: ({ dashboardId, emails, validDays }) => ({
+        url: `/dashboards/${dashboardId}/shares`,
+        method: "POST",
+        body: { emails, valid_days: validDays },
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: "DashboardShare", id: arg.dashboardId }],
+    }),
+    revokeDashboardShare: builder.mutation<{ ok: boolean }, { shareId: string; dashboardId: string }>({
+      query: ({ shareId }) => ({ url: `/dashboard-shares/${shareId}`, method: "DELETE" }),
+      invalidatesTags: (result, error, arg) => [{ type: "DashboardShare", id: arg.dashboardId }],
+    }),
+    getSharedDashboard: builder.query<SharedDashboard, string>({
+      query: (shareId) => `/shared-dashboards/${shareId}`,
+    }),
+    getSharedDashboardData: builder.query<LiveDashboardData, string>({
+      query: (shareId) => `/shared-dashboards/${shareId}/data`,
+      keepUnusedDataFor: 0,
+    }),
     getDashboards: builder.query<DashboardSummary[], string>({
       query: (workspaceId) => `/workspaces/${workspaceId}/dashboards`,
       providesTags: (result, error, workspaceId) =>
@@ -483,6 +530,13 @@ export const {
   useGetChartQuery,
   useGetReportQuery,
   useGetDashboardQuery,
+  useGetDashboardDataQuery,
+  useUpdateDashboardMutation,
+  useGetDashboardSharesQuery,
+  useCreateDashboardShareMutation,
+  useRevokeDashboardShareMutation,
+  useGetSharedDashboardQuery,
+  useGetSharedDashboardDataQuery,
   useGetDashboardsQuery,
   useCreateDashboardMutation,
   useRefreshDashboardMutation,

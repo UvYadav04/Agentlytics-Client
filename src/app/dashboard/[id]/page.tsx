@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Share2 } from "lucide-react";
 import {
+  useGetDashboardDataQuery,
   useGetDashboardQuery,
   useGetFilesQuery,
   useRefreshDashboardMutation,
   useRelinkDashboardFileMutation,
+  useUpdateDashboardMutation,
 } from "@/lib/api/apiSlice";
+import type { DashboardDetail } from "@/lib/types";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
+import LiveDashboardView from "@/components/dashboard/LiveDashboardView";
+import ShareDashboardModal from "@/components/dashboard/ShareDashboardModal";
+
+const SOURCE_LABELS: Record<string, string> = { postgresql: "PostgreSQL", mongodb: "MongoDB", parquet: "Files" };
 
 function timeAgo(iso: string) {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -79,10 +87,54 @@ function DataSourceRow({
   );
 }
 
+function LiveOwnerDashboard({ dashboard }: { dashboard: DashboardDetail }) {
+  const [refreshInterval, setRefreshInterval] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const { data, isFetching, refetch } = useGetDashboardDataQuery(dashboard.id, {
+    pollingInterval: refreshInterval || undefined,
+    refetchOnMountOrArgChange: true,
+  });
+  const [updateDashboard] = useUpdateDashboardMutation();
+
+  return (
+    <>
+      <LiveDashboardView
+        name={dashboard.name}
+        description={dashboard.description}
+        sourceLabel={SOURCE_LABELS[dashboard.source] ?? dashboard.source}
+        timeWindow={dashboard.time_window}
+        windowLabel={dashboard.time_window_label}
+        theme={dashboard.theme}
+        charts={dashboard.live_charts}
+        data={data}
+        isFetching={isFetching}
+        onRefresh={() => refetch()}
+        refreshInterval={refreshInterval}
+        onRefreshIntervalChange={setRefreshInterval}
+        owner={{
+          workspaceId: dashboard.workspace_id,
+          connectionName: dashboard.connection?.name ?? null,
+          onShare: () => setSharing(true),
+          onThemeChange: (theme) =>
+            updateDashboard({ dashboardId: dashboard.id, workspaceId: dashboard.workspace_id, theme }),
+          onWindowChange: async (timeWindow) => {
+            await updateDashboard({ dashboardId: dashboard.id, workspaceId: dashboard.workspace_id, timeWindow });
+            refetch();
+          },
+        }}
+      />
+      {sharing && (
+        <ShareDashboardModal dashboardId={dashboard.id} dashboardName={dashboard.name} onClose={() => setSharing(false)} />
+      )}
+    </>
+  );
+}
+
 export default function DashboardDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const authReady = useRequireAuth();
+  const [sharing, setSharing] = useState(false);
   const { data: dashboard, isError, isLoading } = useGetDashboardQuery(params.id, { skip: !authReady });
   const { data: files = [] } = useGetFilesQuery(dashboard?.workspace_id ?? "", {
     skip: !dashboard?.workspace_id,
@@ -92,6 +144,8 @@ export default function DashboardDetailPage() {
   if (!authReady) return <div className="p-10 text-center text-muted">Loading...</div>;
   if (isError) return <div className="p-10 text-center text-rust">Failed to load dashboard</div>;
   if (isLoading || !dashboard) return <div className="p-10 text-center text-muted">Loading...</div>;
+
+  if (dashboard.source !== "parquet") return <LiveOwnerDashboard dashboard={dashboard} />;
 
   const filesById = new Map(files.map((f) => [f.id, f]));
   const readyFiles = files.filter((f) => f.status === "ready");
@@ -116,6 +170,14 @@ export default function DashboardDetailPage() {
           )}
         </div>
 
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSharing(true)}
+            className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-accent-dark"
+          >
+            <Share2 className="size-3.5" />
+            Share
+          </button>
         {dashboard.real_time && (
           <div className="flex items-center gap-3">
             {dashboard.last_refreshed_at && (
@@ -132,6 +194,7 @@ export default function DashboardDetailPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {dashboard.real_time && dashboard.file_ids.length > 0 && (
@@ -170,6 +233,9 @@ export default function DashboardDetailPage() {
             </div>
           ))}
         </div>
+      )}
+      {sharing && (
+        <ShareDashboardModal dashboardId={dashboard.id} dashboardName={dashboard.name} onClose={() => setSharing(false)} />
       )}
     </main>
   );

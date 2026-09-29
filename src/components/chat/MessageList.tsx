@@ -4,8 +4,13 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FileText, FileSpreadsheet } from "lucide-react";
-import { useGetChartQuery, useGetFilesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
+import { FileText, FileSpreadsheet, LayoutDashboard } from "lucide-react";
+import {
+  useGetChartQuery,
+  useGetDashboardsQuery,
+  useGetFilesQuery,
+  useGetReportQuery,
+} from "@/lib/api/apiSlice";
 import type { ChatMessage, PendingQuestion } from "@/lib/types";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 import ElapsedTimer from "./ElapsedTimer";
@@ -92,6 +97,27 @@ function CsvFilesRow({ csvFileIds }: { csvFileIds: string[] }) {
           <CsvFileChip key={id} reportId={id} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function DashboardLinks({ workspaceId, dashboardIds }: { workspaceId: string; dashboardIds: string[] }) {
+  const { data: dashboards = [] } = useGetDashboardsQuery(workspaceId);
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {dashboardIds.map((id) => {
+        const dashboard = dashboards.find((d) => d.id === id);
+        return (
+          <Link
+            key={id}
+            href={`/dashboard/${id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent-soft/40 px-3 py-1.5 text-xs font-medium text-accent-dark transition-colors hover:bg-accent-soft"
+          >
+            <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+            {dashboard ? `Open live dashboard: ${dashboard.name}` : "Open live dashboard"}
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -277,6 +303,10 @@ export default function MessageList({
             )}
 
             {m.csv_file_ids?.length > 0 && <CsvFilesRow csvFileIds={m.csv_file_ids} />}
+
+            {workspaceId && (m.dashboard_ids?.length ?? 0) > 0 && (
+              <DashboardLinks workspaceId={workspaceId} dashboardIds={m.dashboard_ids ?? []} />
+            )}
 
             {m.role === "assistant" &&
               idx === messages.length - 1 &&

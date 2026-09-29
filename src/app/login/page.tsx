@@ -7,6 +7,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import { useLoginMutation, useResendVerificationMutation } from "@/lib/api/apiSlice";
 import { useRedirectIfAuthed } from "@/lib/hooks/useRedirectIfAuthed";
+import { safeNextPath } from "@/lib/nextPath";
 
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as
@@ -23,7 +24,8 @@ function isUnverifiedError(err: unknown): boolean {
 
 export default function LoginPage() {
   const router = useRouter();
-  const redirecting = useRedirectIfAuthed();
+  const [nextPath] = useState(() => safeNextPath());
+  const redirecting = useRedirectIfAuthed(nextPath);
   const [login, { isLoading }] = useLoginMutation();
   const [resendVerification, { isLoading: resending, isSuccess: resent }] = useResendVerificationMutation();
 
@@ -40,7 +42,7 @@ export default function LoginPage() {
     setShowResend(false);
     try {
       await login({ email, password }).unwrap();
-      router.push("/chat");
+      router.push(nextPath);
     } catch (err) {
       setError(extractErrorMessage(err, "Something went wrong. Try again."));
       setShowResend(isUnverifiedError(err));

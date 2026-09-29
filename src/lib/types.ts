@@ -54,6 +54,7 @@ export type ChatMessage = {
   csv_file_ids: string[];
   files_used: string[];
   follow_up_questions: string[];
+  dashboard_ids?: string[];
   created_at: string;
 };
 
@@ -101,16 +102,111 @@ export type ReportDetail = {
   created_at: string;
 };
 
-export type DashboardDetail = {
+export type DashboardSource = "parquet" | "postgresql" | "mongodb";
+
+export type TimeWindowUnit = "day" | "week" | "month" | "quarter" | "year";
+
+export type DashboardTimeWindow = {
+  column: string;
+  last: number;
+  unit: TimeWindowUnit;
+};
+
+export type DashboardTheme = {
+  mode: "light" | "dark";
+  palette: "default";
+  show_legend: boolean;
+  show_grid: boolean;
+};
+
+export type LiveChartType = "bar" | "stacked_bar" | "line" | "area" | "pie" | "metric" | "table";
+
+export type LiveChartConfig = {
+  chart_id: string;
+  title: string;
+  description: string | null;
+  chart_type: LiveChartType | string;
+  x_column: string | null;
+  value_columns: string[];
+  series_column: string | null;
+  aggregation: string | null;
+  axis: { x_label?: string | null; y_label?: string | null; format?: "number" | "currency" | "percent" };
+  labels: Record<string, string>;
+  query?: Record<string, unknown> | null;
+  validated_at?: string | null;
+};
+
+export type DashboardChartRef = { id: string; title: string; url: string };
+
+export type DashboardSummary = {
   id: string;
   workspace_id: string;
   name: string;
+  description: string | null;
+  source: DashboardSource;
+  database: string | null;
+  tables: string[] | null;
+  time_window: DashboardTimeWindow | null;
+  time_window_label: string | null;
+  theme: DashboardTheme;
   chart_ids: string[];
+  chart_count: number;
   created_at: string;
-  charts: { id: string; title: string; url: string }[];
+  created_by: string | null;
+  updated_at: string | null;
   real_time: boolean;
   file_ids: string[];
   last_refreshed_at: string | null;
+};
+
+export type DashboardDetail = DashboardSummary & {
+  charts: DashboardChartRef[];
+  live_charts: LiveChartConfig[];
+  connection: { id: string; name: string; db_type: string; status: string } | null;
+};
+
+export type LiveChartData = {
+  chart_id: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+  truncated: boolean;
+  error: string | null;
+};
+
+export type LiveDashboardData = {
+  status: "ok" | "credentials_expired" | "connection_missing" | "error";
+  message: string | null;
+  generated_at: string;
+  window: { start: string; end: string; label: string | null } | null;
+  charts: LiveChartData[];
+};
+
+export type DashboardShare = {
+  id: string;
+  dashboard_id: string;
+  shared_to: string[];
+  shared_at: string;
+  valid_upto: string;
+  revoked_at: string | null;
+  active: boolean;
+  path: string;
+};
+
+export type SharedDashboard = {
+  share_id: string;
+  dashboard_id: string;
+  name: string;
+  description: string | null;
+  source: DashboardSource;
+  time_window: DashboardTimeWindow | null;
+  time_window_label: string | null;
+  theme: DashboardTheme;
+  charts: DashboardChartRef[];
+  live_charts: LiveChartConfig[];
+  shared_by: { name: string; email: string };
+  shared_at: string;
+  valid_upto: string;
+  is_owner: boolean;
 };
 
 export type DatabaseType = "mongodb" | "postgresql";

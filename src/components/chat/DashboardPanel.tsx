@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, FileSpreadsheet } from "lucide-react";
-import { useGetWorkspaceChartsQuery, useGetWorkspaceReportsQuery } from "@/lib/api/apiSlice";
+import { FileText, FileSpreadsheet, LayoutDashboard } from "lucide-react";
+import {
+  useGetDashboardsQuery,
+  useGetWorkspaceChartsQuery,
+  useGetWorkspaceReportsQuery,
+} from "@/lib/api/apiSlice";
 import SidebarSection from "./SidebarSection";
 
-export type RightSection = "charts" | "reports" | "csv" | null;
+export type RightSection = "dashboards" | "charts" | "reports" | "csv" | null;
 
 export default function DashboardPanel({
   workspaceId,
@@ -17,12 +21,44 @@ export default function DashboardPanel({
   onSectionChange: (section: RightSection) => void;
 }) {
   const { data: charts = [] } = useGetWorkspaceChartsQuery(workspaceId);
+  const { data: dashboards = [] } = useGetDashboardsQuery(workspaceId);
   const { data: allReports = [] } = useGetWorkspaceReportsQuery(workspaceId);
   const reports = allReports.filter((r) => r.format !== "csv");
   const csvFiles = allReports.filter((r) => r.format === "csv");
 
   return (
     <aside className="hidden w-72 shrink-0 flex-col gap-3 overflow-y-auto p-3 lg:flex">
+      <SidebarSection
+        title="Dashboards"
+        count={dashboards.length}
+        dotColor="bg-gold"
+        open={section === "dashboards"}
+        onToggle={() => onSectionChange(section === "dashboards" ? null : "dashboards")}
+      >
+        <div className="max-h-56 space-y-1.5 overflow-y-auto">
+          {dashboards.length === 0 && (
+            <p className="px-1 py-2 text-xs text-muted">
+              Ask for a live dashboard on a connected database, e.g. &quot;revenue by region for the past 3 months&quot;.
+            </p>
+          )}
+          {dashboards.map((d) => (
+            <Link
+              key={d.id}
+              href={`/dashboard/${d.id}`}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-gold/10 hover:text-accent-dark"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-muted" />
+              <span className="min-w-0 flex-1 truncate">{d.name}</span>
+              {d.source !== "parquet" && (
+                <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-dark">
+                  Live
+                </span>
+              )}
+            </Link>
+          ))}
+        </div>
+      </SidebarSection>
+
       <SidebarSection
         title="Charts"
         count={charts.length}
