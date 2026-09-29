@@ -13,10 +13,12 @@ import {
   useSendMessageMutation,
 } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/lib/hooks";
-import type { ChatMessage, PendingQuestion, Workspace } from "@/lib/types";
+import type { ChatMessage, DatabaseConnection, PendingQuestion, Workspace } from "@/lib/types";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import WorkspaceSwitcher from "@/components/chat/WorkspaceSwitcher";
 import FilesPanel from "@/components/chat/FilesPanel";
+import DatabasesPanel from "@/components/chat/DatabasesPanel";
+import ConnectDatabaseModal from "@/components/database/ConnectDatabaseModal";
 import ChatsPanel from "@/components/chat/ChatsPanel";
 import MessageList from "@/components/chat/MessageList";
 import InputBar from "@/components/chat/InputBar";
@@ -57,7 +59,10 @@ function ChatPageInner() {
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
   const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
 
-  const [leftSection, setLeftSection] = useState<"files" | "chats" | null>("chats");
+  const [leftSection, setLeftSection] = useState<"databases" | "files" | "chats" | null>("chats");
+  const [connectDatabase, setConnectDatabase] = useState<{ reconnectTarget: DatabaseConnection | null } | null>(
+    () => (searchParams.get("connect") === "database" ? { reconnectTarget: null } : null)
+  );
   const [rightSection, setRightSection] = useState<RightSection>(null);
 
   const dispatch = useAppDispatch();
@@ -317,6 +322,14 @@ function ChatPageInner() {
       <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto p-3">
         <WorkspaceSwitcher selectedId={workspaceId} onSelect={selectWorkspace} />
         {workspaceId && (
+          <DatabasesPanel
+            workspaceId={workspaceId}
+            open={leftSection === "databases"}
+            onToggle={() => setLeftSection((s) => (s === "databases" ? null : "databases"))}
+            onConnect={(reconnectTarget) => setConnectDatabase({ reconnectTarget: reconnectTarget ?? null })}
+          />
+        )}
+        {workspaceId && (
           <FilesPanel
             workspaceId={workspaceId}
             open={leftSection === "files"}
@@ -382,6 +395,7 @@ function ChatPageInner() {
             onStartChat={handleStartChat}
             onSelectChat={selectChat}
             onNewChat={handleNewChat}
+            onConnectDatabase={() => setConnectDatabase({ reconnectTarget: null })}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
@@ -394,6 +408,15 @@ function ChatPageInner() {
           </div>
         )}
       </main>
+
+      {workspaceId && connectDatabase && (
+        <ConnectDatabaseModal
+          workspaceId={workspaceId}
+          reconnectTarget={connectDatabase.reconnectTarget}
+          onClose={() => setConnectDatabase(null)}
+          onConnected={() => setLeftSection("databases")}
+        />
+      )}
 
       {workspaceId && (
         <DashboardPanel

@@ -112,3 +112,75 @@ export type DashboardDetail = {
   file_ids: string[];
   last_refreshed_at: string | null;
 };
+
+export type DatabaseType = "mongodb" | "postgresql";
+
+export type RememberOption = "always" | "30d" | "7d" | "never";
+
+export type DatabaseConnectionStatus = "connected" | "failed" | "expired";
+
+export type DatabaseSchemaField = {
+  name: string;
+  type: string;
+  nullable?: boolean;
+  primary_key?: boolean;
+  presence?: number;
+};
+
+export type DatabaseForeignKey = {
+  columns: string[];
+  references: string;
+  referenced_columns: string[];
+};
+
+export type DatabaseSchemaObject = {
+  schema: string | null;
+  name: string;
+  kind: string;
+  row_count: number | null;
+  sampled?: number;
+  fields: DatabaseSchemaField[];
+  foreign_keys: DatabaseForeignKey[];
+};
+
+export type DatabaseSchema = {
+  database: string | null;
+  server_version: string | null;
+  objects: DatabaseSchemaObject[];
+  truncated: boolean;
+};
+
+export type DatabaseConnection = {
+  id: string;
+  workspace_id: string;
+  name: string;
+  db_type: DatabaseType;
+  display_uri: string;
+  host: string;
+  database: string | null;
+  remember: RememberOption;
+  expires_at: string | null;
+  status: DatabaseConnectionStatus;
+  warnings: string[];
+  last_error: string | null;
+  object_count: number;
+  schema_refreshed_at: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+export type DatabaseConnectionDetail = DatabaseConnection & {
+  schema: DatabaseSchema;
+};
+
+export type DatabaseTestResult = {
+  ok: boolean;
+  db_type: DatabaseType;
+  display_uri: string | null;
+  host: string | null;
+  database: string | null;
+  server_version: string | null;
+  schema: DatabaseSchema | null;
+  warnings: string[];
+  error: string | null;
+};

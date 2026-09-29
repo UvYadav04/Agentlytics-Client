@@ -268,6 +268,20 @@ function CTAButton() {
   );
 }
 
+function ConnectDatabaseButton() {
+  const { data: user, isLoading: loading } = useGetMeQuery();
+  if (loading) return null;
+  return (
+    <Link
+      href={user ? "/chat?connect=database" : "/get-started"}
+      className="flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3 font-medium text-text shadow-card transition-all hover:border-accent hover:text-accent-dark"
+    >
+      <Database className="size-4" />
+      Connect a database
+    </Link>
+  );
+}
+
 function HeroIllustration() {
   const agentRows = [
     { icon: FileSearch, label: "Reading sales.parquet", tone: "text-accent-dark" },
@@ -383,8 +397,9 @@ export default function HomePage() {
               file, row, or page it came from.
             </p>
 
-            <div className="mt-7 flex items-center justify-center gap-4 lg:justify-start">
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
               <CTAButton />
+              <ConnectDatabaseButton />
             </div>
 
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3 text-xs text-muted lg:justify-start">

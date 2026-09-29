@@ -5,8 +5,13 @@ import type {
   ChatMessage,
   ChartDetail,
   DashboardDetail,
+  DatabaseConnection,
+  DatabaseConnectionDetail,
+  DatabaseTestResult,
+  DatabaseType,
   FileItem,
   FileStatus,
+  RememberOption,
   ReportDetail,
   UsageInfo,
   User,
@@ -89,6 +94,7 @@ export const api = createApi({
     "Report",
     "Dashboard",
     "Usage",
+    "Database",
   ],
   endpoints: (builder) => ({
     getMe: builder.query<User, void>({
@@ -355,6 +361,93 @@ export const api = createApi({
     submitFeedback: builder.mutation<{ ok: boolean }, string>({
       query: (message) => ({ url: "/feedback", method: "POST", body: { message } }),
     }),
+
+    getDatabases: builder.query<DatabaseConnection[], string>({
+      query: (workspaceId) => `/workspaces/${workspaceId}/databases`,
+      providesTags: (result, error, workspaceId) =>
+        result
+          ? [
+              ...result.map((d) => ({ type: "Database" as const, id: d.id })),
+              { type: "Database" as const, id: `LIST-${workspaceId}` },
+            ]
+          : [{ type: "Database" as const, id: `LIST-${workspaceId}` }],
+    }),
+    getDatabase: builder.query<DatabaseConnectionDetail, string>({
+      query: (connectionId) => `/databases/${connectionId}`,
+      providesTags: (result, error, connectionId) => [{ type: "Database", id: connectionId }],
+    }),
+    testDatabaseConnection: builder.mutation<
+      DatabaseTestResult,
+      { workspaceId: string; dbType: DatabaseType; connectionString: string }
+    >({
+      query: ({ workspaceId, dbType, connectionString }) => ({
+        url: `/workspaces/${workspaceId}/databases/test`,
+        method: "POST",
+        body: { db_type: dbType, connection_string: connectionString },
+      }),
+    }),
+    createDatabaseConnection: builder.mutation<
+      DatabaseConnectionDetail,
+      {
+        workspaceId: string;
+        dbType: DatabaseType;
+        connectionString: string;
+        name?: string;
+        remember: RememberOption;
+      }
+    >({
+      query: ({ workspaceId, dbType, connectionString, name, remember }) => ({
+        url: `/workspaces/${workspaceId}/databases`,
+        method: "POST",
+        body: { db_type: dbType, connection_string: connectionString, name: name || null, remember },
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: "Database", id: `LIST-${arg.workspaceId}` }],
+    }),
+    reconnectDatabase: builder.mutation<
+      DatabaseConnectionDetail,
+      { connectionId: string; workspaceId: string; connectionString: string; remember?: RememberOption }
+    >({
+      query: ({ connectionId, connectionString, remember }) => ({
+        url: `/databases/${connectionId}/reconnect`,
+        method: "POST",
+        body: { connection_string: connectionString, remember: remember ?? null },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Database", id: arg.connectionId },
+        { type: "Database", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    refreshDatabaseSchema: builder.mutation<
+      DatabaseConnectionDetail,
+      { connectionId: string; workspaceId: string }
+    >({
+      query: ({ connectionId }) => ({ url: `/databases/${connectionId}/refresh`, method: "POST" }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Database", id: arg.connectionId },
+        { type: "Database", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    updateDatabaseConnection: builder.mutation<
+      DatabaseConnection,
+      { connectionId: string; workspaceId: string; name?: string; remember?: RememberOption }
+    >({
+      query: ({ connectionId, name, remember }) => ({
+        url: `/databases/${connectionId}`,
+        method: "PATCH",
+        body: { name: name ?? null, remember: remember ?? null },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Database", id: arg.connectionId },
+        { type: "Database", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    deleteDatabaseConnection: builder.mutation<
+      { ok: boolean },
+      { connectionId: string; workspaceId: string }
+    >({
+      query: ({ connectionId }) => ({ url: `/databases/${connectionId}`, method: "DELETE" }),
+      invalidatesTags: (result, error, arg) => [{ type: "Database", id: `LIST-${arg.workspaceId}` }],
+    }),
   }),
 });
 
@@ -396,6 +489,14 @@ export const {
   useRelinkDashboardFileMutation,
   useGetUsageQuery,
   useSubmitFeedbackMutation,
+  useGetDatabasesQuery,
+  useGetDatabaseQuery,
+  useTestDatabaseConnectionMutation,
+  useCreateDatabaseConnectionMutation,
+  useReconnectDatabaseMutation,
+  useRefreshDatabaseSchemaMutation,
+  useUpdateDatabaseConnectionMutation,
+  useDeleteDatabaseConnectionMutation,
 } = api;
 
 export type { FileStatus };
