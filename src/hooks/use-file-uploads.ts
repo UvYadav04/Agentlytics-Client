@@ -26,30 +26,12 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-/**
- * Owns the presign -> PUT -> confirm lifecycle for file uploads, keyed by a
- * stable per-upload id (not array index). Previously each upload's index
- * was computed from `uploads.length` at call time and React batches the
- * setUploads() calls from a synchronous `files.forEach(startUpload)` loop,
- * so every file in a multi-select batch captured the SAME index (0) and
- * kept patching the first item - the 2nd+ file's progress bar never left
- * 0%. Using an id generated up front and matching on it in `patch` fixes
- * that regardless of how many uploads start in the same tick.
- *
- * Lives in a hook (not the upload modal) so progress can be rendered from
- * FilesPanel in the sidebar - the modal closes immediately once the user
- * confirms, but the upload itself keeps running here.
- */
 export function useFileUploads(workspaceId: string) {
   const [uploads, setUploads] = useState<InternalItem[]>([]);
   const [presignUpload] = usePresignUploadMutation();
   const [confirmUpload] = useConfirmUploadMutation();
   const [failUpload] = useFailUploadMutation();
 
-  // Backend file_ids currently mid-upload (PUT to S3 in flight, or waiting on /confirm) - kept as
-  // a ref rather than derived from `uploads` state so the beforeunload/pagehide listeners below
-  // (registered once, on mount) always see the current set without needing to be re-registered
-  // every time an upload's status changes.
   const activeFileIdsRef = useRef<Set<string>>(new Set());
 
   const patch = useCallback((id: string, next: Partial<InternalItem>) => {
@@ -60,21 +42,10 @@ export function useFileUploads(workspaceId: string) {
     setUploads((prev) => prev.filter((u) => u.id !== id));
   }, []);
 
-  // If the tab is closed/refreshed mid-upload, the presign -> PUT -> confirm chain above just
-  // stops - there's no janitor on the backend for a File doc left sitting at "pending_upload"
-  // forever. This can't fully prevent that (browsers give JS no way to run an async cleanup after
-  // the user actually confirms leaving), but it covers the two things that are possible: warn via
-  // the native beforeunload dialog while something is in flight, and if the user leaves anyway,
-  // best-effort tell the backend to cancel/clean up whatever was uploading (a `fetch` with
-  // `keepalive: true` is the modern, CORS/credentials-safe way to do this - unlike
-  // navigator.sendBeacon, it still sends the auth cookie and isn't restricted to simple-request
-  // content types).
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       if (activeFileIdsRef.current.size === 0) return;
       e.preventDefault();
-      // Chrome (and the spec) require returnValue to be set for the confirmation prompt to show;
-      // the actual string is ignored by every modern browser in favor of its own fixed wording.
       e.returnValue = "";
     }
 
@@ -85,8 +56,6 @@ export function useFileUploads(workspaceId: string) {
           credentials: "include",
           keepalive: true,
         }).catch(() => {
-          // Best-effort - nothing left to do if this doesn't land, the file just stays
-          // pending_upload until the backend's own stale-upload cleanup catches it.
         });
       });
     }
@@ -101,9 +70,6 @@ export function useFileUploads(workspaceId: string) {
 
   const startUploads = useCallback(
     (files: File[]) => {
-      // Shared by every file picked in this one "Upload" click, so the server can tell which
-      // files belong together - see worker_service/tasks/ingestion.py's rollback-on-size-failure
-      // logic, which only rolls back siblings sharing this id.
       const batchId = makeId();
       files.forEach((file) => {
         const id = makeId();

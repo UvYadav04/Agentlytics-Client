@@ -1,12 +1,7 @@
 import type { MetadataRoute } from "next";
 
-// Falls back to the production domain so `next build` still produces a valid sitemap even if
-// NEXT_PUBLIC_SITE_URL isn't set (e.g. a local build) - see .env.example for how to override it.
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://agentlytics.duckdns.org").replace(/\/$/, "");
 
-// Only public, content-bearing marketing/auth-entry pages belong here. Anything that renders a
-// specific user's data (chat, profile, dashboard/[id], chart/[id], report/[id]) is excluded - it
-// isn't indexable content and is already blocked in robots.ts.
 const routes: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "", changeFrequency: "weekly", priority: 1 },
   { path: "/about", changeFrequency: "monthly", priority: 0.8 },

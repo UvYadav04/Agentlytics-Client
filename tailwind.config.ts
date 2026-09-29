@@ -1,8 +1,5 @@
 import type { Config } from "tailwindcss";
 
-// Matches the palette already used in generated dashboards/reports
-// (Server/analyzerEngine/tools/reporting/reporting_tools.py) so the app
-// shell and generated content feel like one product, not two.
 const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {

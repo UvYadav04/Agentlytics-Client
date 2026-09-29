@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-// Fades + slides a section in the first time it crosses into the viewport.
-// Cheap IntersectionObserver, no scroll-jank libraries.
 export default function Reveal({
   children,
   className = "",

@@ -3,16 +3,6 @@
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 
-/**
- * Collapsible "floating card" used for every accordion row in the left and
- * right sidebars (Files, Chats, Dashboards, Charts). Open/close state is
- * always controlled by the parent so siblings can be coordinated into a
- * single-open accordion - this component only renders what it's told.
- *
- * The chevron points right while collapsed and rotates to point down once
- * expanded - a quick visual cue of "there's more here, tap to open" vs.
- * "this is showing everything."
- */
 export default function SidebarSection({
   title,
   count,

@@ -18,9 +18,6 @@ export default function DashboardPanel({
 }) {
   const { data: charts = [] } = useGetWorkspaceChartsQuery(workspaceId);
   const { data: allReports = [] } = useGetWorkspaceReportsQuery(workspaceId);
-  // The backend stores CSV exports as Report docs too (format: "csv") - see
-  // _persist_artifacts in worker_service/tasks/investigation.py - so this one query covers
-  // both sections, split client-side by format.
   const reports = allReports.filter((r) => r.format !== "csv");
   const csvFiles = allReports.filter((r) => r.format === "csv");
 

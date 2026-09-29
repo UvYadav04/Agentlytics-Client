@@ -64,8 +64,6 @@ export default function FilesPanel({
 }) {
   const [showUpload, setShowUpload] = useState(false);
   const [poll, setPoll] = useState(true);
-  // Default is "date" (newest first) - matches upload order, which is what most people expect
-  // to see first. Purely a client-side display preference, not persisted server-side.
   const [sortBy, setSortBy] = useState<SortOption>("date");
 
   const { data: files = [] } = useGetFilesQuery(workspaceId, {

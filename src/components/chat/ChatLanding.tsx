@@ -3,15 +3,6 @@
 import { useState } from "react";
 import type { Chat } from "@/lib/types";
 
-/**
- * Shown whenever there's no active chat - on first load, and again whenever
- * a workspace is created or switched (selecting a workspace resets chatId
- * to null). Rather than telling the user to go find "New chat" in the
- * sidebar, this puts a message box front and center: typing and sending
- * silently creates a chat and sends the message in one step. The row of
- * chat pills below covers "I want to go back to an existing chat" without
- * making the user hunt in a collapsed accordion section.
- */
 export default function ChatLanding({
   chats,
   submitting,
@@ -40,12 +31,6 @@ export default function ChatLanding({
         <span className="h-3 w-3 rounded-full bg-accent" />
       </div>
 
-      {/* <div className="max-w-lg">
-        <h2 className="text-xl font-semibold">Talk to your data files.</h2>
-        <p className="mt-1.5 text-sm text-muted">
-          Ask a real question - an agent reads the file and shows its work.
-        </p>
-      </div> */}
 
       <div className="w-full max-w-3xl">
         <div className="flex items-end gap-3 rounded-card border border-border bg-card px-4 py-3 shadow-card transition-shadow focus-within:border-accent focus-within:shadow-[0_0_25px_-10px_rgba(204,120,92,0.5)]">
@@ -77,35 +62,7 @@ export default function ChatLanding({
         </p>
       </div>
 
-      {/* {chats.length > 0 && (
-        <div className="flex w-full max-w-3xl flex-wrap items-center justify-center gap-2">
-          <button
-            onClick={onNewChat}
-            className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark"
-          >
-            + New chat
-          </button>
-          {chats.slice(0, 6).map((c) => (
-            <button
-              key={c.id}
-              onClick={() => onSelectChat(c.id)}
-              className="max-w-[160px] truncate rounded-full border border-border bg-card px-3 py-1.5 text-xs text-text transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark"
-              title={c.title}
-            >
-              {c.title}
-            </button>
-          ))}
-        </div>
-      )} */}
 
-      {/* {chats.length === 0 && (
-        <button
-          onClick={onNewChat}
-          className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark"
-        >
-          + Start a blank chat instead
-        </button>
-      )} */}
     </div>
   );
 }

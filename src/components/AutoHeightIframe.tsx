@@ -5,15 +5,6 @@ import { useEffect, useRef, useState } from "react";
 const MIN_HEIGHT = 240;
 const INITIAL_HEIGHT = 480;
 
-/**
- * Renders a sandboxed chart/report iframe with no fixed height. The
- * generated HTML (see reporting_tools.py) posts its real content height via
- * postMessage on load and whenever it resizes - we just mirror that back
- * onto the iframe element. No scrollbar, no clipped/oversized fixed box.
- *
- * Falls back to a fixed INITIAL_HEIGHT until the first message arrives
- * (typically well under a second), and never shrinks below MIN_HEIGHT.
- */
 export default function AutoHeightIframe({
   src,
   title,
@@ -28,9 +19,6 @@ export default function AutoHeightIframe({
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      // Scope to this iframe specifically - a page can render several of
-      // these at once (e.g. the dashboard grid), and messages from one
-      // shouldn't resize another.
       if (event.source !== ref.current?.contentWindow) return;
       const data = event.data;
       if (data && data.source === "data-analyzer-chart" && typeof data.height === "number") {

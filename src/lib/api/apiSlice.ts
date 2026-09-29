@@ -42,10 +42,11 @@ export type DashboardSummary = {
 };
 
 export type SendMessageResult = {
-  message_id: string;
+  message_id: string | null;
   investigation_id: string | null;
   limited: boolean;
   limit_message: string | null;
+  answered_question: boolean;
 };
 
 export type PresignResult = {
@@ -71,19 +72,6 @@ export type ChangePasswordBody = {
   confirm_new_password: string;
 };
 
-/**
- * Single RTK Query API slice for the whole app. Cache invalidation is
- * modeled with tags scoped per-parent (e.g. `{type: "File", id: "LIST-<workspaceId>"}`)
- * so mutating/creating inside one workspace/chat never invalidates every
- * other workspace/chat's cached lists.
- *
- * SSE (investigation streaming) is NOT modeled here - it's a push channel,
- * not request/response, so it stays as a plain EventSource in
- * useInvestigationStream. Once a stream reaches a terminal event, callers
- * dispatch `api.util.invalidateTags(...)` themselves to pull in whatever
- * the worker produced (new assistant Message, Usage counters, Chart/Report
- * docs) - see app/chat/page.tsx.
- */
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
@@ -103,7 +91,6 @@ export const api = createApi({
     "Usage",
   ],
   endpoints: (builder) => ({
-    // ---------------------------------------------------------------- auth
     getMe: builder.query<User, void>({
       query: () => "/me",
       providesTags: ["User"],
@@ -141,7 +128,6 @@ export const api = createApi({
       invalidatesTags: ["User"],
     }),
 
-    // ----------------------------------------------------------- workspaces
     getWorkspaces: builder.query<Workspace[], void>({
       query: () => "/workspaces",
       providesTags: (result) =>
@@ -180,7 +166,6 @@ export const api = createApi({
       ],
     }),
 
-    // ---------------------------------------------------------------- files
     getFiles: builder.query<FileItem[], string>({
       query: (workspaceId) => `/workspaces/${workspaceId}/files`,
       providesTags: (result, error, workspaceId) =>
@@ -233,7 +218,6 @@ export const api = createApi({
       ],
     }),
 
-    // ---------------------------------------------------------------- chats
     getChats: builder.query<Chat[], string>({
       query: (workspaceId) => `/workspaces/${workspaceId}/chats`,
       providesTags: (result, error, workspaceId) =>
@@ -267,8 +251,6 @@ export const api = createApi({
     }),
     deleteChat: builder.mutation<{ ok: boolean }, { chatId: string; workspaceId: string }>({
       query: ({ chatId }) => ({ url: `/chats/${chatId}`, method: "DELETE" }),
-      // Cascades server-side to that chat's messages/charts/reports/files, so
-      // sweep every list that could reference them - not just Chat.
       invalidatesTags: (result, error, arg) => [
         { type: "Chat", id: arg.chatId },
         { type: "Chat", id: `LIST-${arg.workspaceId}` },
@@ -285,18 +267,14 @@ export const api = createApi({
         { type: "Message" as const, id: `LIST-${chatId}` },
       ],
     }),
-    // No invalidatesTags here on purpose - the chat page appends the user's message (and later
-    // the assistant's, once the investigation completes) directly into its own local message
-    // list instead of invalidating the "Message" tag and letting RTK Query refetch the whole
-    // list. See app/chat/page.tsx's currentMessages state.
     sendMessage: builder.mutation<
       SendMessageResult,
-      { chatId: string; content: string; fileIds?: string[] }
+      { chatId: string; content: string; fileIds?: string[]; answerTo?: string }
     >({
-      query: ({ chatId, content, fileIds }) => ({
+      query: ({ chatId, content, fileIds, answerTo }) => ({
         url: `/chats/${chatId}/messages`,
         method: "POST",
-        body: { content, file_ids: fileIds ?? [] },
+        body: { content, file_ids: fileIds ?? [], answer_to: answerTo ?? null },
       }),
     }),
     getActiveInvestigation: builder.query<{ investigation_id: string | null }, string>({
@@ -312,7 +290,6 @@ export const api = createApi({
       }),
     }),
 
-    // ------------------------------------------------ charts/reports/dashboards
     getChart: builder.query<ChartDetail, string>({
       query: (id) => `/charts/${id}`,
       providesTags: (result, error, id) => [{ type: "Chart", id }],
@@ -350,10 +327,6 @@ export const api = createApi({
     }),
     refreshDashboard: builder.mutation<{ ok: boolean }, { dashboardId: string; workspaceId: string }>({
       query: ({ dashboardId }) => ({ url: `/dashboards/${dashboardId}/refresh`, method: "POST" }),
-      // The worker job hasn't necessarily finished by the time this resolves - refresh is
-      // fire-and-forget server-side, so this just re-fetches to catch last_refreshed_at
-      // ticking over shortly after. Callers that want to reflect "refreshing..." in the UI
-      // should track that locally around the mutation call, not from this response.
       invalidatesTags: (result, error, arg) => [
         { type: "Dashboard", id: arg.dashboardId },
         { type: "Dashboard", id: `LIST-${arg.workspaceId}` },
@@ -374,13 +347,11 @@ export const api = createApi({
       ],
     }),
 
-    // --------------------------------------------------------------- usage
     getUsage: builder.query<UsageInfo, void>({
       query: () => "/usage",
       providesTags: ["Usage"],
     }),
 
-    // ------------------------------------------------------------ feedback
     submitFeedback: builder.mutation<{ ok: boolean }, string>({
       query: (message) => ({ url: "/feedback", method: "POST", body: { message } }),
     }),
@@ -427,5 +398,4 @@ export const {
   useSubmitFeedbackMutation,
 } = api;
 
-// Re-exported so callers don't need to know FileStatus lives in types.ts too.
 export type { FileStatus };

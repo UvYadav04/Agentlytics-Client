@@ -146,10 +146,6 @@ const STATS = [
   { value: "Live", label: "Streamed investigation trace", color: "text-rust" },
 ];
 
-// Illustrative only - mock data purely to show the shape of what an
-// investigation can hand back (see the "Charts, generated on demand"
-// section). Hand-rolled SVG/CSS so this doesn't pull in a charting library
-// for what's essentially marketing decoration.
 function MiniBarChart() {
   const data = [35, 62, 48, 90, 73, 55, 88];
   const max = Math.max(...data);
@@ -249,9 +245,6 @@ const CHARTS = [
   { title: "Category breakdown", body: "See how a total splits up.", chart: MiniDonutChart },
 ];
 
-// Logged-in users get a straight line into the product. Logged-out visitors
-// go to /get-started first - a page that sells the product - rather than
-// being dropped straight into the Google auth popup off the hero.
 function CTAButton() {
   const { data: user, isLoading: loading } = useGetMeQuery();
   if (loading) return null;
@@ -275,10 +268,6 @@ function CTAButton() {
   );
 }
 
-// Right-hand side of the hero - a compact visual of what "agents working
-// behind the scenes" actually looks like: a live investigation panel with
-// pulsing agent rows, plus two floating badges (a generated chart, a
-// verified answer) to sell "charts" and "traceability" without more copy.
 function HeroIllustration() {
   const agentRows = [
     { icon: FileSearch, label: "Reading sales.parquet", tone: "text-accent-dark" },
@@ -290,7 +279,6 @@ function HeroIllustration() {
     <div className="relative mx-auto w-full max-w-md lg:mx-0">
       <div className="glow-blob animate-float-b -top-10 right-0 h-56 w-56 bg-plum opacity-30" />
 
-      {/* Main panel: agents visibly at work */}
       <div className="relative z-10 overflow-hidden rounded-card border border-accent/15 bg-card shadow-[0_20px_60px_-20px_rgba(204,120,92,0.35)]">
         <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-rust/70" />
@@ -321,7 +309,6 @@ function HeroIllustration() {
         </div>
       </div>
 
-      {/* Floating badge: a chart got generated */}
       <div className="absolute -right-6 -top-6 z-20 hidden items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card sm:flex">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold shadow-card">
           <BarChart3 className="h-4 w-4 text-white" />
@@ -332,7 +319,6 @@ function HeroIllustration() {
         </div>
       </div>
 
-      {/* Floating badge: the answer is traceable */}
       <div className="absolute -bottom-6 -left-4 z-20 flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent shadow-card">
           <CheckCircle2 className="h-4 w-4 text-white" />
@@ -351,8 +337,6 @@ export default function HomePage() {
 
   return (
     <main>
-      {/* Hero - two columns: the pitch on the left, a live look at the
-          agents working behind the scenes on the right. */}
       <section
         ref={heroRef}
         className="relative flex min-h-[88vh] flex-col justify-center overflow-hidden px-6 py-16"
@@ -372,7 +356,6 @@ export default function HomePage() {
         />
 
         <div className="relative z-20 mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2 lg:gap-10">
-          {/* Left: the pitch */}
           <div className="text-center lg:text-left">
             <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs text-muted shadow-card backdrop-blur lg:mx-0">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -417,12 +400,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right: agents working behind the scenes */}
           <HeroIllustration />
         </div>
       </section>
 
-      {/* Stats strip */}
       <section className="relative z-30 -mt-10 px-6">
         <Reveal className="mx-auto max-w-5xl">
           <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-card border border-border bg-card shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
@@ -438,7 +419,6 @@ export default function HomePage() {
         </Reveal>
       </section>
 
-      {/* Charts, generated on demand */}
       <section className="px-6 py-20">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
@@ -466,7 +446,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Spreadsheets - CSV/XLSX */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -542,7 +521,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* PDFs & documents */}
       <section className="border-t border-border bg-card/60">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -605,7 +583,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Product showcase */}
       <section id="product" className="mt-16 border-t border-border bg-card/60">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal className="mx-auto max-w-2xl text-center">
@@ -677,7 +654,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <Reveal className="text-center">
@@ -709,7 +685,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="relative overflow-hidden border-t border-border bg-card/60">
         <div className="glow-blob animate-float-c -top-10 -right-16 h-72 w-72 bg-gold opacity-20" />
         <div className="relative mx-auto max-w-6xl px-6 py-24">
@@ -746,7 +721,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Why it's different */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-5xl px-6 py-24">
           <Reveal className="text-center">
@@ -807,7 +781,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Personas */}
       <section className="relative overflow-hidden border-t border-border bg-card/60">
         <div className="glow-blob animate-float-a -bottom-16 -left-16 h-72 w-72 bg-plum opacity-20" />
         <div className="relative mx-auto max-w-6xl px-6 py-24">
@@ -837,7 +810,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Final CTA */}
       <section className="relative overflow-hidden border-t border-border">
         <div className="glow-blob animate-float-b top-0 right-1/4 h-80 w-80 bg-accent opacity-30" />
         <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
@@ -856,7 +828,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border bg-card/40">
         <div className="mx-auto max-w-6xl px-6 py-14">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">

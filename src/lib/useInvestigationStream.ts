@@ -31,7 +31,6 @@ export function useInvestigationStream(
           onTerminalRef.current();
         }
       } catch {
-        // ignore malformed/comment lines
       }
     };
 

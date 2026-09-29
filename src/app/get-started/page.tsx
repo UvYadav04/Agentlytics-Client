@@ -14,10 +14,6 @@ import {
 import { useGetMeQuery } from "@/lib/api/apiSlice";
 import Reveal from "@/components/Reveal";
 
-// Reachable from the hero/final CTA on the homepage ("Get started") but
-// deliberately left out of the navbar - this sells what you can *build*
-// with Agentlytics (reports, dashboards, memory) rather than repeating the
-// homepage's "how agents investigate" pitch.
 
 const CAPABILITIES = [
   {
@@ -75,7 +71,6 @@ function MiniBarChart({ className = "" }: { className?: string }) {
   );
 }
 
-// Bottom of the page: the one decision a first-time visitor needs to make.
 function FinalCTA() {
   const { data: user, isLoading: loading } = useGetMeQuery();
 
@@ -103,7 +98,6 @@ function FinalCTA() {
 export default function GetStartedPage() {
   return (
     <main>
-      {/* 1. Intro */}
       <section className="relative overflow-hidden px-6 py-16 sm:py-20 text-center">
         <div className="glow-blob animate-float-a -top-20 -left-20 h-80 w-80 bg-accent opacity-25" />
         <div className="glow-blob animate-float-b top-10 -right-16 h-72 w-72 bg-gold opacity-20" />
@@ -126,7 +120,6 @@ export default function GetStartedPage() {
         </Reveal>
       </section>
 
-      {/* 2. Capabilities */}
       <section className="border-t border-border bg-card/60">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
           <Reveal className="text-center">
@@ -167,7 +160,6 @@ export default function GetStartedPage() {
         </div>
       </section>
 
-      {/* 3. Report generation, up close */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -237,7 +229,6 @@ export default function GetStartedPage() {
         </div>
       </section>
 
-      {/* 4. Live dashboards teaser */}
       <section className="relative overflow-hidden border-t border-border bg-card/60">
         <div className="glow-blob animate-float-c -top-10 -right-16 h-72 w-72 bg-plum opacity-20" />
         <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-24">
@@ -294,7 +285,6 @@ export default function GetStartedPage() {
         </div>
       </section>
 
-      {/* 5. Final CTA */}
       <section className="relative overflow-hidden border-t border-border">
         <div className="glow-blob animate-float-b top-0 right-1/4 h-80 w-80 bg-accent opacity-30" />
         <div className="relative mx-auto max-w-4xl px-6 py-16 sm:py-24 text-center">

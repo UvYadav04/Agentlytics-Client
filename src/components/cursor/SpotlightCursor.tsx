@@ -11,9 +11,6 @@ interface SpotlightConfig {
   pulseSpeed?: number;
   overlayColor?: string;
   overlayOpacity?: number;
-  // Scopes the effect to one element instead of the full viewport. Pass a
-  // ref to a `position: relative; overflow: hidden` container (e.g. a dark
-  // hero section) - without this the dark overlay covers the whole page.
   containerRef?: RefObject<HTMLElement>;
 }
 

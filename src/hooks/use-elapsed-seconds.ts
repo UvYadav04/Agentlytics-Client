@@ -2,11 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-/**
- * Ticks once a second while `startedAt` (a Date.now() timestamp) is set, returning whole
- * seconds elapsed since it. Returns 0 (and doesn't tick) while `startedAt` is null - callers
- * control the timer entirely by passing/clearing that timestamp, this hook just renders it.
- */
 export function useElapsedSeconds(startedAt: number | null): number {
   const [now, setNow] = useState<number>(() => startedAt ?? Date.now());
 

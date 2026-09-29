@@ -21,12 +21,6 @@ declare global {
   }
 }
 
-// Renders our own styled button ("Get started" / "Log in" / whatever the
-// caller wants) and layers Google's real Sign In With Google button
-// invisibly on top of it, stretched to fill the same box. Clicks land on
-// the real (cross-origin iframe) Google button - which can't be triggered
-// programmatically - while the user only ever sees our button. See
-// `.gsi-overlay iframe` in globals.css for the stretch rule.
 export default function GoogleLoginButton({
   label = "Log in",
   className = "rounded-full bg-accent px-6 py-3 text-white font-medium shadow-card hover:bg-accent-dark transition-colors",
@@ -40,9 +34,6 @@ export default function GoogleLoginButton({
   const handleCredential = useCallback(
     async (response: { credential: string }) => {
       try {
-        // Invalidates the "User" tag on success, so every useGetMeQuery()
-        // subscriber (Navbar, pages) refetches automatically - no manual
-        // refresh() plumbing needed.
         await googleLogin(response.credential).unwrap();
       } catch (err) {
         console.error("Google login failed", err);
@@ -53,10 +44,6 @@ export default function GoogleLoginButton({
 
   const initialize = useCallback(() => {
     if (!window.google || !buttonRef.current || !GOOGLE_CLIENT_ID) return;
-    // Re-initializing with the same client_id is harmless - each mounted
-    // instance (Navbar, hero, ...) calls this once its own script load
-    // fires (or immediately, see the effect below, if another instance
-    // already loaded the script first).
     window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleCredential,

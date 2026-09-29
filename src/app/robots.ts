@@ -7,9 +7,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Everything under these renders a specific signed-in user's own data (chat threads,
-      // uploaded files, generated charts/dashboards/reports, account settings) - no SEO value,
-      // and there's nothing generic there for a crawler to usefully index.
       disallow: ["/chat", "/profile", "/dashboard/", "/chart/", "/report/"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

@@ -10,10 +10,6 @@ import {
 import SidebarSection from "./SidebarSection";
 import { Pencil, Trash } from "lucide-react";
 
-// FastAPI HTTPException(...) errors arrive as {data: {detail: "plain string"}} through RTK
-// Query's .unwrap() - same shape handled in login/signup/profile pages. The free-tier chat-limit
-// check (402) is the main thing this button can hit, so surface whatever detail the server sent
-// instead of letting the click silently do nothing.
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
   return typeof data?.detail === "string" ? data.detail : fallback;

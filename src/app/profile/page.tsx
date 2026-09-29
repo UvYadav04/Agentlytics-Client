@@ -14,9 +14,6 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-// hasPassword=false means a Google-only account - no current_password field/check makes sense
-// yet (see api_service/routers/auth.py's change_password), and the copy/button reflect "set"
-// rather than "change" since there's nothing to change from.
 function ChangePasswordCard({ hasPassword }: { hasPassword: boolean }) {
   const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -150,11 +147,6 @@ function Bar({ used, limit, color }: { used: number; limit: number; color: strin
   );
 }
 
-/** Small deterministic pseudo-random walk that lands on `end` - the API
- * only gives us a current used/limit snapshot, not a real history, so this
- * is illustrative only: it turns a flat number into something that reads
- * like a trend at a glance, without inventing fake precision. Seeded so it
- * doesn't reshuffle on every re-render. */
 function trendPoints(seed: number, end: number, count = 9): number[] {
   let s = seed * 9301 + 49297;
   const next = () => {

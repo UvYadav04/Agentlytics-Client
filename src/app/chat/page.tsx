@@ -6,7 +6,6 @@ import {
   api,
   useCancelInvestigationMutation,
   useCreateChatMutation,
-  // useGetActiveInvestigationQuery, - unused now that auto-reconnect below is disabled
   useGetChatsQuery,
   useGetMeQuery,
   useGetMessagesQuery,
@@ -14,7 +13,7 @@ import {
   useSendMessageMutation,
 } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/lib/hooks";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, PendingQuestion, Workspace } from "@/lib/types";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import WorkspaceSwitcher from "@/components/chat/WorkspaceSwitcher";
 import FilesPanel from "@/components/chat/FilesPanel";
@@ -25,16 +24,14 @@ import ChatLanding from "@/components/chat/ChatLanding";
 import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
 
-// FastAPI HTTPException(...) errors arrive as {data: {detail: "plain string"}} through RTK
-// Query's .unwrap() - same shape handled in login/signup/profile pages. Used below to surface
-// the free-tier chat-limit message (402 from POST /chats) instead of failing silently.
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
   return typeof data?.detail === "string" ? data.detail : fallback;
 }
 
+const EMPTY_WORKSPACES: Workspace[] = [];
+
 export default function ChatPage() {
-  // useSearchParams needs a Suspense boundary around it in the app router.
   return (
     <Suspense fallback={null}>
       <ChatPageInner />
@@ -47,41 +44,19 @@ function ChatPageInner() {
   const searchParams = useSearchParams();
 
   const { data: user, isLoading: authLoading } = useGetMeQuery();
-  const { data: workspaces = [] } = useGetWorkspacesQuery(undefined, { skip: !user });
+  const { data: workspaces = EMPTY_WORKSPACES } = useGetWorkspacesQuery(undefined, { skip: !user });
 
-  // Seeded from the URL (?workspace=...&chat=...) so a chart/dashboard link
-  // opened from a message, then closed via the browser's back button, lands
-  // back on the exact chat the user was in - see the sync effect below,
-  // which keeps the URL current as workspaceId/chatId change. Without this,
-  // navigating to /chart/[id] and back fully remounts this page and these
-  // would reset to null, dropping the user on the empty landing state
-  // instead of where they were.
   const [workspaceId, setWorkspaceId] = useState<string | null>(searchParams.get("workspace"));
   const [chatId, setChatId] = useState<string | null>(searchParams.get("chat"));
   const [liveInvestigationId, setLiveInvestigationId] = useState<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [startingChat, setStartingChat] = useState(false);
-  // The chat's message list, owned locally instead of read straight off the RTK Query cache.
-  // Hydrated from the server only when the chat changes (or on its initial fetch) - see the
-  // effect below. A sent user message or a completed assistant message is appended directly
-  // here instead of going through invalidateTags + a full-list refetch.
   const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([]);
   const hydratedChatRef = useRef<string | null>(null);
-  // True only for the brief window between hitting send and the SSE stream actually starting
-  // (liveInvestigationId being set) or the request failing/hitting a limit - drives the small
-  // "sending..." indicator in MessageList.
   const [sending, setSending] = useState(false);
-  // Date.now() from the moment the user hit send - drives the elapsed-time
-  // readout in MessageList/InvestigationTrail. Set alongside sending, but
-  // stays set for the WHOLE investigation (through liveInvestigationId
-  // streaming) rather than being cleared with it - only cleared once the
-  // investigation reaches a terminal state (handleLiveTerminal), hits the
-  // usage limit, errors out, or the user switches chats/workspaces.
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
 
-  // Accordion state for the left (Files/Chats) and right (Dashboards/Charts)
-  // sidebars - only one section per side is open at a time, and both can be
-  // collapsed to null.
   const [leftSection, setLeftSection] = useState<"files" | "chats" | null>("chats");
   const [rightSection, setRightSection] = useState<RightSection>(null);
 
@@ -90,59 +65,28 @@ function ChatPageInner() {
   const [cancelInvestigation] = useCancelInvestigationMutation();
   const [createChat] = useCreateChatMutation();
 
-  // Default to the first workspace once the list loads.
   useEffect(() => {
     if (!workspaceId && workspaces.length > 0) setWorkspaceId(workspaces[0].id);
   }, [workspaces, workspaceId]);
 
-  // Mirror the current selection into the URL (replace, not push, so
-  // switching chats doesn't spam browser history) - this is what makes the
-  // back button from /chart/[id] or /dashboard/[id] land back on the right
-  // chat instead of the empty landing state, since this page reads its
-  // initial state from these same params on mount.
   useEffect(() => {
     const params = new URLSearchParams();
     if (workspaceId) params.set("workspace", workspaceId);
     if (chatId) params.set("chat", chatId);
     const qs = params.toString();
+    if (qs === searchParams.toString()) return;
     router.replace(qs ? `/chat?${qs}` : "/chat", { scroll: false });
-  }, [workspaceId, chatId, router]);
+  }, [workspaceId, chatId, router, searchParams]);
 
-  // On chat load, auto-reconnect to a still-running investigation instead
-  // of showing an idle input (build plan Phase 5).
-  //
-  // Disabled per request: on refresh, the chat itself still reopens (URL
-  // sync effect above), but a still-running investigation no longer
-  // auto-resumes its live SSE stream/timer - the chat just shows idle
-  // until the user sends a new message, even if a previous investigation
-  // is technically still running server-side. Re-enable by uncommenting
-  // both the query and the effect below.
-  // const { data: activeInvestigation } = useGetActiveInvestigationQuery(chatId ?? "", {
-  //   skip: !chatId,
-  // });
-  // useEffect(() => {
-  //   setLiveInvestigationId(activeInvestigation?.investigation_id ?? null);
-  // }, [activeInvestigation]);
 
-  // For the header bar's chat title - RTK Query dedupes this against
-  // ChatsPanel's identical query, so it's not an extra network request.
   const { data: chats = [] } = useGetChatsQuery(workspaceId ?? "", { skip: !workspaceId });
   const activeChatTitle = chats.find((c) => c.id === chatId)?.title;
 
-  // Same query args MessageList uses below - RTK Query dedupes this against
-  // its identical call, so checking "does this chat have any messages yet"
-  // up here doesn't cost an extra request. Drives which composer renders:
-  // the big centered one pre-first-message, or the compact docked one once
-  // there's a thread to scroll through.
   const { data: chatMessages = [], isLoading: messagesLoading } = useGetMessagesQuery(
     chatId ?? "",
     { skip: !chatId }
   );
 
-  // Hydrate currentMessages from the server exactly once per chat load (mount, or switching to
-  // a different chat). Once hydrated for a given chatId, later changes to the RTK cache (a
-  // background refetch, another tab, focus refetch, etc.) are ignored - only handleSend/
-  // handleStartChat/handleLiveTerminal append to currentMessages after that point.
   useEffect(() => {
     if (!chatId) {
       setCurrentMessages([]);
@@ -155,10 +99,6 @@ function ChatPageInner() {
     hydratedChatRef.current = chatId;
   }, [chatId, chatMessages, messagesLoading]);
 
-  // Defensive filter, independent of the hydrate effect above: guarantees a message from a
-  // chat_id other than the one currently selected can never render, even for a single frame -
-  // covers any timing edge case in the hydrate effect (e.g. a stale RTK Query isLoading read on
-  // the render right after switching chats) rather than relying on that effect's ordering alone.
   const visibleMessages = currentMessages.filter((m) => m.chat_id === chatId);
 
   const showEmptyComposer =
@@ -168,25 +108,42 @@ function ChatPageInner() {
     setWorkspaceId(id);
     setChatId(null);
     setLiveInvestigationId(null);
+    setPendingQuestion(null);
     setRequestStartedAt(null);
     setSending(false);
   }
 
   function selectChat(id: string | null) {
     setChatId(id);
-    // Cleared synchronously here (not left to the hydrate effect below, which only runs a tick
-    // later) so switching chats never briefly renders the previous chat's messages under the
-    // new chatId - the hydrate effect still re-populates this once the new chat's own messages
-    // (if any) have loaded, since hydratedChatRef.current still points at the old chat id.
     setCurrentMessages([]);
     setLiveInvestigationId(null);
+    setPendingQuestion(null);
     setLimitMessage(null);
     setRequestStartedAt(null);
     setSending(false);
   }
 
+  async function handleAnswer(answer: string, questionId: string) {
+    if (!chatId) return;
+    setLimitMessage(null);
+    setSending(true);
+    try {
+      const res = await sendMessage({ chatId, content: answer, answerTo: questionId }).unwrap();
+      if (res.answered_question) setPendingQuestion(null);
+    } catch (err) {
+      setLimitMessage(extractErrorMessage(err, "Couldn't send your answer. Please try again."));
+      throw err;
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function handleSend(content: string, fileIds: string[]) {
     if (!chatId) return;
+    if (pendingQuestion && liveInvestigationId) {
+      await handleAnswer(content, pendingQuestion.question_id).catch(() => undefined);
+      return;
+    }
     setLimitMessage(null);
     setSending(true);
     setRequestStartedAt(Date.now());
@@ -209,9 +166,15 @@ function ChatPageInner() {
     ]);
     try {
       const res = await sendMessage({ chatId, content, fileIds }).unwrap();
+      if (res.answered_question) {
+        setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setLiveInvestigationId(res.investigation_id);
+        return;
+      }
+      const messageId = res.message_id ?? tempId;
       setCurrentMessages((prev) =>
         prev.map((m) =>
-          m.id === tempId ? { ...m, id: res.message_id, investigation_id: res.investigation_id } : m
+          m.id === tempId ? { ...m, id: messageId, investigation_id: res.investigation_id } : m
         )
       );
       if (res.limited) {
@@ -234,9 +197,6 @@ function ChatPageInner() {
     await cancelInvestigation(liveInvestigationId);
   }
 
-  // Used by ChatLanding's centered input: typing a message with no chat
-  // selected creates one on the fly and sends the message in the same step,
-  // instead of making the user click "New chat" first.
   async function handleStartChat(content: string) {
     if (!workspaceId || startingChat) return;
     setStartingChat(true);
@@ -244,16 +204,11 @@ function ChatPageInner() {
     setRequestStartedAt(Date.now());
     setLimitMessage(null);
     const tempId = `pending-${Date.now()}`;
-    // Tracks whether createChat succeeded, so the catch block below knows whether there's an
-    // optimistic message to roll back (createChat failing - e.g. the free-tier 2-chat limit -
-    // means nothing was ever added) vs. a failure partway through sendMessage.
     let chatCreated = false;
     try {
       const chat = await createChat({ workspaceId }).unwrap();
       chatCreated = true;
       setChatId(chat.id);
-      // Brand-new chat - nothing to hydrate from the server, so the chatId-change effect above
-      // should leave currentMessages (the optimistic entry below) alone.
       hydratedChatRef.current = chat.id;
       setCurrentMessages([
         {
@@ -271,9 +226,10 @@ function ChatPageInner() {
         },
       ]);
       const res = await sendMessage({ chatId: chat.id, content }).unwrap();
+      const messageId = res.message_id ?? tempId;
       setCurrentMessages((prev) =>
         prev.map((m) =>
-          m.id === tempId ? { ...m, id: res.message_id, investigation_id: res.investigation_id } : m
+          m.id === tempId ? { ...m, id: messageId, investigation_id: res.investigation_id } : m
         )
       );
       if (res.limited) {
@@ -287,10 +243,6 @@ function ChatPageInner() {
         setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
       }
       setRequestStartedAt(null);
-      // Surface this instead of throwing - ChatLanding calls onStartChat without awaiting it, so
-      // a re-thrown error here previously became an invisible unhandled rejection (e.g. hitting
-      // the free-tier chat limit produced no feedback at all). The limitMessage banner renders
-      // above the main content regardless of chatId, so it's visible from the landing view too.
       setLimitMessage(
         extractErrorMessage(err, "Couldn't start this chat. Please try again.")
       );
@@ -313,15 +265,11 @@ function ChatPageInner() {
   function handleLiveTerminal() {
     const finishedChatId = chatId;
     setRequestStartedAt(null);
+    setPendingQuestion(null);
     if (!finishedChatId || !workspaceId) {
       setLiveInvestigationId(null);
       return;
     }
-    // The worker created a new assistant Message (and possibly Chart/Report docs, and bumped
-    // Usage counters) asynchronously, after the SSE stream closed - none of that came back as a
-    // mutation response. Fetch the fresh list ONCE via a direct, non-tag-invalidating request
-    // and append only the message(s) not already in currentMessages, instead of invalidating the
-    // "Message" tag (which would cascade into a full-list refetch for every subscriber).
     dispatch(api.endpoints.getMessages.initiate(finishedChatId, { forceRefetch: true }))
       .then((result) => {
         const fresh = result.data ?? [];
@@ -387,18 +335,6 @@ function ChatPageInner() {
       </aside>
 
       <main className="flex flex-1 min-w-0 flex-col">
-        {/* {chatId && (
-          <div className="flex items-center gap-2 border-b border-border bg-card px-6 py-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            <span className="truncate text-sm font-medium">{activeChatTitle}</span>
-            {liveInvestigationId && (
-              <span className="ml-auto flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent-dark">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-                Investigating
-              </span>
-            )}
-          </div>
-        )} */}
 
         {limitMessage && (
           <div className="border-b border-border bg-gold/15 px-4 py-2 text-center text-sm text-accent-dark">
@@ -427,11 +363,14 @@ function ChatPageInner() {
               requestStartedAt={requestStartedAt}
               onLiveTerminal={handleLiveTerminal}
               onSend={handleSend}
+              onAnswer={handleAnswer}
+              onPendingQuestionChange={setPendingQuestion}
             />
             <InputBar
               workspaceId={workspaceId ?? ""}
               disabled={!chatId}
               busy={!!liveInvestigationId}
+              answering={!!pendingQuestion && !!liveInvestigationId && !sending}
               onSend={handleSend}
               onStop={handleStop}
             />

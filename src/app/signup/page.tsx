@@ -45,9 +45,6 @@ export default function SignupPage() {
     }
   }
 
-  // Signup never logs the user in - it just kicks off email verification. Swap the form out
-  // for a "check your inbox" state instead of redirecting, since there's nowhere to redirect
-  // TO yet (see api_service/routers/auth.py's signup docstring).
   if (submittedEmail) {
     return (
       <AuthLayout centered>

@@ -17,9 +17,6 @@ export default function ForgotPasswordPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    // Fire-and-forget on purpose: the API always returns the same generic message regardless
-    // of whether the email is registered (see api_service/routers/auth.py's forgot_password),
-    // so there's nothing here worth branching on beyond "the request went out".
     await forgotPassword(email);
     setSubmitted(true);
   }

@@ -9,16 +9,8 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-// Instant client-side feedback only - the real, authoritative limit is enforced server-side in
-// api_service/routers/files.py's presign_upload (shared/upload_limits.py, MAX_DOCUMENT_UPLOAD_MB,
-// default 25MB) since this constant could drift or be bypassed entirely. PDF/txt specifically
-// because they're read in full for RAG, unlike CSV/XLSX which stream more incrementally.
 const LIMITED_TYPE_MB: Record<string, number> = { pdf: 25, txt: 25 };
 
-// Kept in sync with Server/analyzerEngine/ingestion/file_types/pdf/pdf_ingestor.py's
-// MAX_PDF_PAGES, which re-checks this server-side (this client check can be skipped entirely by
-// calling the API directly). A page count this high is also what tends to push a single PDF's
-// chunks past what the vector store will accept in one upsert - see PDFIngestor.ingest().
 const MAX_PDF_PAGES = 30;
 
 function fileKey(f: File) {
@@ -34,13 +26,6 @@ function sizeReason(file: File): string | null {
   return `Exceeds the ${limitMb}MB limit for .${ext} files`;
 }
 
-/**
- * Selection-only step. Picking files here doesn't upload anything - it just
- * stages metadata (name, size) for the user to confirm or cancel. Actual
- * upload only starts once they hit "Upload", at which point this modal
- * closes and hands the files off to the parent (FilesPanel), which tracks
- * progress in the sidebar via useFileUploads.
- */
 export default function UploadModal({
   onClose,
   onConfirm,
@@ -49,9 +34,6 @@ export default function UploadModal({
   onConfirm: (files: File[]) => void;
 }) {
   const [selected, setSelected] = useState<File[]>([]);
-  // PDF page counts, read asynchronously via pdf-lib as files are added. "checking" while the
-  // read is in flight, "error" if the PDF couldn't be parsed at all (blocked either way, same as
-  // an oversized file - safer than silently letting an unreadable PDF through).
   const [pdfPageCounts, setPdfPageCounts] = useState<Record<string, number | "checking" | "error">>({});
   const inputRef = useRef<HTMLInputElement>(null);
 

@@ -12,11 +12,6 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return typeof data?.detail === "string" ? data.detail : fallback;
 }
 
-// The route the emailed verification link points to (see shared/email.py's
-// send_verification_email) - reachable any number of times with the same token. The backend
-// (GET /auth/verify-email) never clears the token on success, so clicking the same link twice,
-// or re-opening an old email, both land here and both call the same endpoint - it just reports
-// "already verified" instead of erroring the second time.
 function VerifyEmailInner() {
   const token = useSearchParams().get("token");
   const [verifyEmail, { data, error, isFetching }] = useLazyVerifyEmailQuery();

@@ -30,8 +30,6 @@ export default function ChartPage() {
         &#8592; Back to chat
       </button>
       <h1 className="text-xl font-semibold mb-4">{chart.title}</h1>
-      {/* Never injected into our DOM - a sandboxed iframe loads the
-          generated HTML straight from its own presigned URL. */}
       <AutoHeightIframe
         src={chart.url}
         title={chart.title}

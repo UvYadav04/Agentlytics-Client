@@ -2,10 +2,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-// cursify's Spotlight Cursor hook, adapted to optionally scope itself to a
-// container (containerRef) instead of the whole viewport - see
-// components/cursor/SpotlightCursor.tsx for why (a full-page 85%-black
-// overlay is great for a dark hero, but would blind the rest of the app).
 const useSpotlightEffect = (config = {}) => {
   const {
     spotlightSize = 200,

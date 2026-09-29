@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { FileText, FileSpreadsheet } from "lucide-react";
 import { useGetChartQuery, useGetFilesQuery, useGetReportQuery } from "@/lib/api/apiSlice";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, PendingQuestion } from "@/lib/types";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
@@ -150,6 +150,8 @@ export default function MessageList({
   requestStartedAt,
   onLiveTerminal,
   onSend,
+  onAnswer,
+  onPendingQuestionChange,
 }: {
   chatId: string;
   workspaceId: string | null;
@@ -160,6 +162,8 @@ export default function MessageList({
   onLiveTerminal: () => void;
 
   onSend: (content: string, fileIds: string[]) => void;
+  onAnswer: (answer: string, questionId: string) => Promise<void>;
+  onPendingQuestionChange: (question: PendingQuestion | null) => void;
 }) {
   const busy = sending || !!liveInvestigationId;
 
@@ -274,9 +278,6 @@ export default function MessageList({
 
             {m.csv_file_ids?.length > 0 && <CsvFilesRow csvFileIds={m.csv_file_ids} />}
 
-            {/* Only the most recent assistant turn, and only once nothing is actively running -
-                a follow-up suggestion from three messages ago is more likely to confuse than
-                help, and clicking one mid-stream would fire a second send on top of the first. */}
             {m.role === "assistant" &&
               idx === messages.length - 1 &&
               !busy &&
@@ -295,6 +296,8 @@ export default function MessageList({
               live
               onTerminal={onLiveTerminal}
               startedAt={requestStartedAt}
+              onAnswer={onAnswer}
+              onPendingQuestionChange={onPendingQuestionChange}
             />
           </div>
         </div>
@@ -305,7 +308,6 @@ export default function MessageList({
               <ul className="mt-2 space-y-1.5">
                 <li className="flex items-start gap-2 text-xs text-muted">
                   <span className="mt-1 size-3 shrink-0 animate-pulse rounded-full bg-accent"/>
-                  {/* <ElapsedTimer startedAt={requestStartedAt} className="ml-auto shrink-0 text-[11px] tabular-nums text-muted" /> */}
                 </li>
               </ul>
             </div>

@@ -8,9 +8,6 @@ import GoogleLoginButton from "@/components/GoogleLoginButton";
 import { useLoginMutation, useResendVerificationMutation } from "@/lib/api/apiSlice";
 import { useRedirectIfAuthed } from "@/lib/hooks/useRedirectIfAuthed";
 
-// FastAPI/pydantic validation errors arrive as {detail: [{msg, ...}]}; our own
-// HTTPException(...) errors arrive as {detail: "plain string"} - handle both so every error
-// path (signup/login/forgot-password/change-password) can share this one helper.
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as
     | { detail?: string | { msg?: string }[] }
@@ -53,7 +50,6 @@ export default function LoginPage() {
   return (
     <AuthLayout centered>
       <h2 className="text-2xl font-bold tracking-tight w-full text-center">Welcome back</h2>
-      {/* <p className="mt-1.5 text-sm text-muted w-full">Log in to your workspace.</p> */}
 
       <div className="mt-6 w-full">
         <GoogleLoginButton

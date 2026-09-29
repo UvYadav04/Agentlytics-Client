@@ -2,16 +2,6 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-// cursify's Canvas Cursor hook (the rope/spring "snake" trail effect),
-// rewritten to encapsulate all state inside the effect instead of module-
-// level globals and getElementById('canvas') - the original snippet breaks
-// if more than one instance ever mounts (React StrictMode double-invokes
-// effects in dev) and leaks its resize/focus/blur listeners on unmount.
-// The physics (Node/Line spring simulation) are unchanged. The original
-// also cycled the trail through the full hue wheel via a sine oscillator -
-// replaced with a fixed hue matching the app's terracotta accent (#CC785C
-// = hsl(15, 55%, 55%)) so the trail reads as "this site's cursor," not a
-// rainbow demo effect.
 function useCanvasCursor(options = {}) {
   const canvasRef = useRef(null);
 

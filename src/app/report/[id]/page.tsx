@@ -8,15 +8,8 @@ import { useGetReportQuery } from "@/lib/api/apiSlice";
 import { useRequireAuth } from "@/lib/hooks/useRequireAuth";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 
-// Past this many data rows, rendering the full table gets sluggish and mostly unreadable anyway
-// - show a preview plus a note instead. The download button always has the complete file.
 const CSV_PREVIEW_ROW_LIMIT = 500;
 
-// Small, dependency-free CSV parser (quote-aware: handles quoted fields containing commas,
-// newlines, and "" as an escaped quote) - avoids pulling in a new npm package just for this one
-// preview table. Not a full RFC 4180 implementation, but covers what pandas/csv.writer produce,
-// which is all this ever needs to read (these files are all generated server-side by our own
-// sandbox, never arbitrary user uploads).
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -55,7 +48,6 @@ function parseCsv(text: string): string[][] {
       field += char;
     }
   }
-  // Last field/row, if the file didn't end with a trailing newline.
   if (field.length > 0 || row.length > 0) {
     row.push(field);
     rows.push(row);

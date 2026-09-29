@@ -4,29 +4,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FileItem } from "@/lib/types";
 import { useGetFilesQuery } from "@/lib/api/apiSlice";
 
-/**
- * Typing "@" opens an autocomplete of the current workspace's files (ready
- * ones only - matches what the orchestrator's FileCatalog actually accepts,
- * see worker_service/tasks/investigation.py's _build_catalog). Picking one
- * inserts "@filename " into the text and adds the file to `mentionedFiles`,
- * whose ids are sent alongside the message as `file_ids` - see onSend.
- */
 export default function InputBar({
   workspaceId,
   disabled,
   busy,
+  answering = false,
   onSend,
   onStop,
 }: {
   workspaceId: string;
   disabled: boolean;
   busy: boolean;
+  answering?: boolean;
   onSend: (content: string, fileIds: string[]) => void;
   onStop: () => void;
 }) {
   const [value, setValue] = useState("");
   const [mentionedFiles, setMentionedFiles] = useState<FileItem[]>([]);
-  // null = the "@..." autocomplete isn't currently open.
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -57,8 +51,6 @@ export default function InputBar({
       return;
     }
     const between = uptoCursor.slice(at + 1);
-    // A space/newline between "@" and the cursor means we've moved past the
-    // mention token - stop treating it as an active autocomplete.
     if (/\s/.test(between)) {
       setMentionQuery(null);
       setMentionStart(null);
@@ -98,7 +90,7 @@ export default function InputBar({
 
   function submit() {
     const trimmed = value.trim();
-    if (!trimmed || disabled || busy) return;
+    if (!trimmed || disabled || (busy && !answering)) return;
     onSend(
       trimmed,
       mentionedFiles.map((f) => f.id)
@@ -168,7 +160,6 @@ export default function InputBar({
               <li key={f.id}>
                 <button
                   onMouseDown={(e) => {
-                    // Prevent the textarea from blurring before onClick fires.
                     e.preventDefault();
                     selectFile(f);
                   }}
@@ -188,10 +179,10 @@ export default function InputBar({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Talk to your files... (@ to reference one)"
+          placeholder={answering ? "Type your answer..." : "Talk to your files... (@ to reference one)"}
           className="flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted"
         />
-        {busy ? (
+        {busy && (
           <button
             onClick={onStop}
             className="flex shrink-0 items-center gap-1.5 rounded-full bg-rust px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-rust/90"
@@ -199,7 +190,8 @@ export default function InputBar({
             <span className="h-2 w-2 rounded-[2px] bg-white" />
             Stop
           </button>
-        ) : (
+        )}
+        {(!busy || answering) && (
           <button
             onClick={submit}
             disabled={disabled || !value.trim()}
@@ -210,7 +202,9 @@ export default function InputBar({
         )}
       </div>
       <p className="mt-1.5 px-1 text-[11px] text-muted">
-        Enter to send &middot; Shift+Enter for a new line &middot; @ to reference a file
+        {answering
+          ? "Answering the question above \u00b7 Enter to send"
+          : "Enter to send \u00b7 Shift+Enter for a new line \u00b7 @ to reference a file"}
       </p>
     </div>
   );

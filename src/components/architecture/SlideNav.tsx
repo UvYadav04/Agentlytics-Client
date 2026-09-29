@@ -4,10 +4,6 @@ import { useEffect, useState } from "react";
 
 export type SlideNavItem = { id: string; label: string };
 
-// Fixed dot rail down the right edge of the architecture page - highlights
-// whichever full-height slide is currently centered in the viewport, and
-// jumps there on click. Hidden below `lg` since there's no room for it next
-// to a single-column slide on small screens.
 export default function SlideNav({ slides }: { slides: SlideNavItem[] }) {
   const [active, setActive] = useState(slides[0]?.id);
 

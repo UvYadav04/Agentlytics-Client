@@ -3,12 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import type { Components } from "react-markdown";
-// react-markdown (v9, unified/rehype under the hood) hands every custom component its
-// underlying hast node via the `node` prop - a plain, well-defined tree (table > [thead,
-// tbody] > tr > [th|td] > text), regardless of how react-markdown itself renders children.
-// Walking that tree ourselves (instead of trying to slice the rendered React children) is what
-// lets the compact preview below show "first 4 columns, first 5 rows" without caring how many
-// columns/rows the real table actually has.
 type HastNode = {
   type: string;
   tagName?: string;
@@ -34,10 +28,6 @@ function extractTableData(node: HastNode): { headers: string[]; rows: string[][]
   return { headers, rows };
 }
 
-// Past this many columns or rows, an assistant-generated table reliably blows past the chat
-// bubble's width and either scrolls horizontally inside a tiny box or squishes every column
-// unreadably - see the report this was written against. Below the threshold, a plain
-// `.markdown table` (see globals.css) renders exactly as before, untouched.
 const WIDE_COLUMN_THRESHOLD = 5;
 const TALL_ROW_THRESHOLD = 12;
 const PREVIEW_COLUMNS = 4;
@@ -95,11 +85,6 @@ type MarkdownTableProps =
   ExtraProps & {
     node?: Element;
   };
-// Swapped in as ReactMarkdown's `table` renderer (see MessageList.tsx) - a narrow/short table
-// renders exactly as before (just wrapped for horizontal-scroll safety); a wide/long one shows
-// a truncated preview instead, with the FULL table (the same `children` react-markdown already
-// built, so any inline markdown/links inside cells still render correctly) one click away in a
-// modal sized to the viewport, not the chat column.
 export default function MarkdownTable({
   node,
   children,

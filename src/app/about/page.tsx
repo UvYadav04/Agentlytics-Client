@@ -45,9 +45,6 @@ type Stage = {
   rows: Node[][];
 };
 
-// Nine stops, one straight line from "you dropped a file in" to "here's an
-// answer you can check." Each stage gets its own slide so the story reads
-// one idea at a time instead of a wall of architecture prose.
 const STAGES: Stage[] = [
   {
     id: "ingestion",
@@ -266,9 +263,6 @@ function DiagramPanel({ stage }: { stage: Stage }) {
   );
 }
 
-// Thin dashed line + chevron between two stage slides - a small, literal
-// nod to "this flows into the next thing," without restructuring the
-// alternating-panel layout above it.
 function FlowConnector({ color }: { color: string }) {
   return (
     <div className="relative flex justify-center py-2">
@@ -292,8 +286,6 @@ export default function AboutPage() {
 
   return (
     <main className="grid-bg relative">
-      {/* Scroll progress rail - thin, top of viewport, tracks how far into
-          the pipeline story the reader has gotten. */}
       <div className="fixed inset-x-0 top-0 z-40 h-[3px] bg-border/60">
         <div
           className="h-full bg-gradient-to-r from-accent to-rust transition-[width] duration-150 ease-out"
@@ -303,7 +295,6 @@ export default function AboutPage() {
 
       <SlideNav slides={SLIDES} />
 
-      {/* Title */}
       <section className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center">
         <div className="glow-blob animate-float-a -top-16 -left-16 h-72 w-72 bg-accent opacity-20" />
         <div className="glow-blob animate-float-b top-10 -right-16 h-64 w-64 bg-plum opacity-20" />
@@ -327,9 +318,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* One slide per stage, alternating left/right, with a dashed
-          connector dropped between consecutive stages to read as a single
-          flowing pipeline rather than nine disconnected cards. */}
       {STAGES.map((stage, i) => (
         <div key={stage.id}>
           <section
@@ -371,7 +359,6 @@ export default function AboutPage() {
         </div>
       ))}
 
-      {/* Closing */}
       <section className="relative overflow-hidden border-t border-border bg-card/60 px-6 py-20 text-center">
         <div className="glow-blob animate-float-b top-0 right-1/4 h-80 w-80 bg-accent opacity-25" />
         <Reveal className="relative mx-auto max-w-xl">

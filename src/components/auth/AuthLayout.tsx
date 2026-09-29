@@ -3,9 +3,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-// Small, self-contained chart mocks - same illustrative-only spirit as the ones on the
-// homepage/get-started page (see app/page.tsx's MiniBarChart), just compact enough to live
-// inside a tilted overlapping card here rather than a full section.
 function MiniBarChart() {
   const data = [35, 62, 48, 90, 73, 55];
   const max = Math.max(...data);
@@ -81,9 +78,6 @@ function MiniDonutChart() {
   );
 }
 
-// Three tilted, overlapping chart cards - "a few overlapping charts" behind the pitch copy.
-// Purely decorative (absolute positioning inside a fixed-height container), matches the
-// hand-rolled-SVG-not-a-charting-library approach already used elsewhere in the app.
 function OverlappingCharts() {
   return (
     <div className="relative h-64 w-full max-w-sm">
@@ -106,14 +100,6 @@ function OverlappingCharts() {
   );
 }
 
-// Shared shell for /login, /signup, /forgot-password, /verify-email. Two modes:
-//  - centered (login/signup): just the boxed form, full-width and centered on screen - no split,
-//    no illustration, nothing competing with the form itself.
-//  - split (default, forgot-password/verify-email): left half is the wordmark plus the
-//    overlapping-charts illustration, right half is the same boxed form. Collapses to a single
-//    column below lg.
-// Uses min-h-screen (rather than subtracting a navbar height) since the navbar is hidden on
-// these routes - see Navbar.tsx's HIDDEN_ON.
 export default function AuthLayout({
   children,
   centered = false,
