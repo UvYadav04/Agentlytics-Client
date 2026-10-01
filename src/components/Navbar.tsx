@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
+import BrandMark from "@/components/marketing/BrandMark";
 
 const HIDDEN_ON = ["/login", "/signup", "/forgot-password"];
 
@@ -18,7 +19,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-20 border-b border-border bg-bg/90 backdrop-blur">
       <div className="flex w-full items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="inline-block h-6 w-6 rounded-md bg-accent" />
+          <BrandMark />
           <span className="font-semibold tracking-tight">Agentlytics</span>
         </Link>
 

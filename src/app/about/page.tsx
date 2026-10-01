@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import {
   ArrowRight,
   Bot,
@@ -285,6 +286,7 @@ export default function AboutPage() {
   const progress = useScrollProgress();
 
   return (
+    <>
     <main className="grid-bg relative">
       <div className="fixed inset-x-0 top-0 z-40 h-[3px] bg-border/60">
         <div
@@ -380,5 +382,7 @@ export default function AboutPage() {
         </Reveal>
       </section>
     </main>
+    <SiteFooter />
+    </>
   );
 }

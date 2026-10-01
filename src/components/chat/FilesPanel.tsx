@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Download, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import type { FileItem } from "@/lib/types";
-import { useDeleteFileMutation, useGetFilesQuery } from "@/lib/api/apiSlice";
+import {
+  useDeleteFileMutation,
+  useGetFileDownloadUrlMutation,
+  useGetFilesQuery,
+  useRenameFileMutation,
+  useRetryFileMutation,
+} from "@/lib/api/apiSlice";
 import { useFileUploads } from "@/hooks/use-file-uploads";
+import { replacementAccept, useFileReplace, type ReplaceState } from "@/hooks/use-file-replace";
+import MoreMenu, { type MoreMenuItem } from "@/components/ui/MoreMenu";
 import UploadModal from "./UploadModal";
 import SidebarSection from "./SidebarSection";
-import { Trash } from "lucide-react";
 
 const STATUS_LABEL: Record<FileItem["status"], string> = {
   pending_upload: "Uploading",
@@ -53,6 +61,300 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+function errorMessage(err: unknown, fallback: string) {
+  const data = (err as { data?: { detail?: unknown } } | undefined)?.data;
+  return typeof data?.detail === "string" ? data.detail : fallback;
+}
+
+function splitName(filename: string) {
+  const dot = filename.lastIndexOf(".");
+  return dot > 0 ? { stem: filename.slice(0, dot), ext: filename.slice(dot) } : { stem: filename, ext: "" };
+}
+
+function FileRow({
+  file,
+  workspaceId,
+  replaceState,
+  onReplace,
+  onAbortReplace,
+  onDismissReplace,
+}: {
+  file: FileItem;
+  workspaceId: string;
+  replaceState?: ReplaceState;
+  onReplace: (next: File) => void;
+  onAbortReplace: () => void;
+  onDismissReplace: () => void;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const renameRef = useRef<HTMLInputElement>(null);
+  const [renameFile, { isLoading: renamingBusy }] = useRenameFileMutation();
+  const [deleteFile, { isLoading: deleting }] = useDeleteFileMutation();
+  const [retryFile] = useRetryFileMutation();
+  const [getDownloadUrl] = useGetFileDownloadUrlMutation();
+
+  const busy = PROCESSING_STATUSES.has(file.status) || !!replaceState;
+  const showPageProgress = file.status === "processing" && !!file.pages_total && !replaceState;
+  const statusLabel = replaceState
+    ? replaceState.status === "error"
+      ? "Replace failed"
+      : replaceState.status === "confirming"
+        ? "Processing"
+        : `Replacing ${replaceState.progress}%`
+    : showPageProgress
+      ? `${file.pages_done ?? 0}/${file.pages_total} pages`
+      : STATUS_LABEL[file.status];
+  const statusColor = replaceState
+    ? replaceState.status === "error"
+      ? STATUS_COLOR.failed
+      : STATUS_COLOR.processing
+    : STATUS_COLOR[file.status];
+  const progressPct = showPageProgress
+    ? Math.min(100, Math.round(((file.pages_done ?? 0) / (file.pages_total || 1)) * 100))
+    : 0;
+
+  useEffect(() => {
+    if (renaming) {
+      renameRef.current?.focus();
+      renameRef.current?.select();
+    }
+  }, [renaming]);
+
+  function startRename() {
+    setDraftName(splitName(file.filename).stem);
+    setRowError(null);
+    setRenaming(true);
+  }
+
+  async function submitRename() {
+    const trimmed = draftName.trim();
+    if (!trimmed || trimmed === splitName(file.filename).stem) {
+      setRenaming(false);
+      return;
+    }
+    try {
+      await renameFile({ fileId: file.id, workspaceId, filename: `${trimmed}${splitName(file.filename).ext}` }).unwrap();
+      setRenaming(false);
+    } catch (err) {
+      setRowError(errorMessage(err, "Couldn't rename the file."));
+    }
+  }
+
+  async function download() {
+    setRowError(null);
+    try {
+      const { url } = await getDownloadUrl(file.id).unwrap();
+      const link = document.createElement("a");
+      link.href = url;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      setRowError(errorMessage(err, "Couldn't download the file."));
+    }
+  }
+
+  async function retry() {
+    setRowError(null);
+    try {
+      await retryFile({ fileId: file.id, workspaceId }).unwrap();
+    } catch (err) {
+      setRowError(errorMessage(err, "Couldn't retry processing."));
+    }
+  }
+
+  async function remove() {
+    try {
+      await deleteFile({ fileId: file.id, workspaceId }).unwrap();
+    } catch (err) {
+      setConfirmingDelete(false);
+      setRowError(errorMessage(err, "Couldn't delete the file."));
+    }
+  }
+
+  const menuItems: MoreMenuItem[] = [
+    { key: "rename", label: "Rename", icon: Pencil, onSelect: startRename, disabled: busy },
+    {
+      key: "replace",
+      label: "Replace file...",
+      icon: RefreshCw,
+      onSelect: () => {
+        setRowError(null);
+        onDismissReplace();
+        inputRef.current?.click();
+      },
+      disabled: busy,
+      hint: "Upload a new version - charts and dashboards keep using this file",
+    },
+    {
+      key: "download",
+      label: "Download original",
+      icon: Download,
+      onSelect: download,
+      disabled: file.status === "pending_upload" || file.status === "cancelled",
+    },
+    ...(file.status === "failed" && !replaceState
+      ? [{ key: "retry", label: "Retry processing", icon: RotateCcw, onSelect: retry } as MoreMenuItem]
+      : []),
+    "separator",
+    {
+      key: "delete",
+      label: "Delete",
+      icon: Trash2,
+      danger: true,
+      disabled: !!replaceState,
+      onSelect: () => {
+        setRowError(null);
+        setConfirmingDelete(true);
+      },
+    },
+  ];
+
+  return (
+    <li className="group rounded-lg px-1.5 py-1.5 transition-colors hover:bg-bg">
+      <div className="flex items-center gap-2">
+        <span
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+            replaceState
+              ? replaceState.status === "error"
+                ? "bg-rust"
+                : "animate-pulse bg-gold"
+              : file.status === "ready"
+                ? "bg-accent"
+                : file.status === "failed"
+                  ? "bg-rust"
+                  : PROCESSING_STATUSES.has(file.status)
+                    ? "animate-pulse bg-gold"
+                    : "bg-border"
+          }`}
+        />
+        {renaming ? (
+          <form
+            className="flex min-w-0 flex-1 items-center gap-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitRename();
+            }}
+          >
+            <input
+              ref={renameRef}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setRenaming(false);
+                }
+              }}
+              onBlur={submitRename}
+              disabled={renamingBusy}
+              maxLength={190}
+              aria-label="New file name"
+              className="min-w-0 flex-1 rounded-md border border-accent bg-card px-1.5 py-0.5 text-sm outline-none"
+            />
+            <span className="shrink-0 text-[11px] text-muted">{splitName(file.filename).ext}</span>
+          </form>
+        ) : (
+          <span className="flex-1 truncate text-sm" title={file.dummy ? `${file.filename} (sample file)` : file.filename}>
+            {file.filename}
+          </span>
+        )}
+        {!renaming && (
+          <span className="flex shrink-0 items-center gap-1.5">
+            {file.warning && !replaceState && (
+              <AlertTriangle className="size-3.5 text-gold" aria-label={file.warning}>
+                <title>{file.warning}</title>
+              </AlertTriangle>
+            )}
+            {file.dummy && (
+              <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">Sample</span>
+            )}
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusColor}`}>{statusLabel}</span>
+            {!file.dummy && <MoreMenu items={menuItems} label={`More options for ${file.filename}`} />}
+          </span>
+        )}
+      </div>
+
+      {replaceState && replaceState.status !== "error" && (
+        <div className="ml-3.5 mt-1 flex items-center gap-2">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-border">
+            <div
+              className={`h-full transition-all ${replaceState.status === "confirming" ? "animate-pulse bg-gold" : "bg-accent"}`}
+              style={{ width: `${replaceState.progress}%` }}
+            />
+          </div>
+          {replaceState.status === "uploading" && (
+            <button type="button" onClick={onAbortReplace} className="text-[10px] text-muted hover:text-rust">
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
+
+      {showPageProgress && (
+        <div className="ml-3.5 mt-1 h-1 overflow-hidden rounded-full bg-border">
+          <div className="h-full bg-gold transition-all" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
+
+      {file.warning && !replaceState && (
+        <p className="ml-3.5 mt-1 text-[10px] leading-snug text-accent-dark">{file.warning}</p>
+      )}
+
+      {(rowError || replaceState?.error) && (
+        <p className="ml-3.5 mt-1 flex items-start justify-between gap-2 text-[10px] leading-snug text-rust">
+          <span>{rowError || replaceState?.error}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setRowError(null);
+              onDismissReplace();
+            }}
+            className="shrink-0 text-muted hover:text-text"
+            aria-label="Dismiss"
+          >
+            &times;
+          </button>
+        </p>
+      )}
+
+      {confirmingDelete && (
+        <div className="ml-3.5 mt-1.5 flex items-center gap-2 text-[11px]">
+          <span className="text-muted">Delete this file?</span>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={deleting}
+            className="rounded-full bg-rust px-2 py-0.5 font-medium text-white hover:bg-rust/90 disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+          <button type="button" onClick={() => setConfirmingDelete(false)} className="text-muted hover:text-text">
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={replacementAccept(file.file_type)}
+        className="hidden"
+        onChange={(e) => {
+          const next = e.target.files?.[0];
+          e.target.value = "";
+          if (next) onReplace(next);
+        }}
+      />
+    </li>
+  );
+}
+
 export default function FilesPanel({
   workspaceId,
   open,
@@ -69,12 +371,12 @@ export default function FilesPanel({
   const { data: files = [] } = useGetFilesQuery(workspaceId, {
     pollingInterval: poll ? 3000 : 0,
   });
-  const [deleteFile] = useDeleteFileMutation();
   const { uploads, startUploads, cancelUpload } = useFileUploads(workspaceId);
+  const { replaceStates, startReplace, abortReplace, dismissReplace } = useFileReplace(workspaceId);
 
   useEffect(() => {
-    setPoll(files.some((f) => PROCESSING_STATUSES.has(f.status)));
-  }, [files]);
+    setPoll(files.some((f) => PROCESSING_STATUSES.has(f.status)) || Object.keys(replaceStates).length > 0);
+  }, [files, replaceStates]);
 
   const activeUploadFileIds = new Set(
     uploads.map((u) => u.fileId).filter((id): id is string => !!id)
@@ -172,68 +474,17 @@ export default function FilesPanel({
             </li>
           ))}
 
-          {visibleFiles.map((f) => {
-            const showPageProgress = f.status === "processing" && !!f.pages_total;
-            const statusLabel = showPageProgress
-              ? `${f.pages_done ?? 0}/${f.pages_total} pages`
-              : STATUS_LABEL[f.status];
-            const progressPct = showPageProgress
-              ? Math.min(100, Math.round(((f.pages_done ?? 0) / (f.pages_total || 1)) * 100))
-              : 0;
-
-            return (
-              <li
-                key={f.id}
-                className="group rounded-lg px-1.5 py-1.5 transition-colors hover:bg-bg"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                      f.status === "ready"
-                        ? "bg-accent"
-                        : f.status === "failed"
-                          ? "bg-rust"
-                          : PROCESSING_STATUSES.has(f.status)
-                            ? "animate-pulse bg-gold"
-                            : "bg-border"
-                    }`}
-                  />
-                  <span className="flex-1 truncate text-sm" title={f.dummy ? `${f.filename} (sample file)` : f.filename}>
-                    {f.filename}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    {f.dummy && (
-                      <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">
-                        Sample
-                      </span>
-                    )}
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_COLOR[f.status]}`}
-                    >
-                      {statusLabel}
-                    </span>
-                    {!f.dummy && (
-                      <button
-                        className="hidden h-4 w-4 items-center justify-center rounded-full text-[10px] text-muted hover:bg-rust/15 hover:text-rust group-hover:flex"
-                        title="Delete"
-                        onClick={() => deleteFile({ fileId: f.id, workspaceId })}
-                      >
-                        <Trash size={16}/>
-                      </button>
-                    )}
-                  </span>
-                </div>
-                {showPageProgress && (
-                  <div className="ml-3.5 mt-1 h-1 overflow-hidden rounded-full bg-border">
-                    <div
-                      className="h-full bg-gold transition-all"
-                      style={{ width: `${progressPct}%` }}
-                    />
-                  </div>
-                )}
-              </li>
-            );
-          })}
+          {visibleFiles.map((f) => (
+            <FileRow
+              key={f.id}
+              file={f}
+              workspaceId={workspaceId}
+              replaceState={replaceStates[f.id]}
+              onReplace={(next) => startReplace(f, next)}
+              onAbortReplace={() => abortReplace(f.id)}
+              onDismissReplace={() => dismissReplace(f.id)}
+            />
+          ))}
         </ul>
       </SidebarSection>
 

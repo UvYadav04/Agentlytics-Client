@@ -34,6 +34,8 @@ export type FileItem = {
   dummy: boolean;
   pages_done: number | null;
   pages_total: number | null;
+  warning?: string | null;
+  replacing?: boolean;
 };
 
 export type Chat = {

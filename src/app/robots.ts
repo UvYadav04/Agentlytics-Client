@@ -1,13 +1,21 @@
 import type { MetadataRoute } from "next";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://agentlytics.duckdns.org").replace(/\/$/, "");
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/chat", "/profile", "/dashboard/", "/chart/", "/report/"],
+      disallow: [
+        "/chat",
+        "/profile",
+        "/dashboard/",
+        "/dashboards/",
+        "/chart/",
+        "/report/",
+        "/verify-email",
+        "/forgot-password",
+      ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

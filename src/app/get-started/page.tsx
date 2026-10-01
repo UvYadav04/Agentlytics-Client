@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import {
   Brain,
   CheckCircle2,
@@ -97,6 +98,7 @@ function FinalCTA() {
 
 export default function GetStartedPage() {
   return (
+    <>
     <main>
       <section className="relative overflow-hidden px-6 py-16 sm:py-20 text-center">
         <div className="glow-blob animate-float-a -top-20 -left-20 h-80 w-80 bg-accent opacity-25" />
@@ -305,5 +307,7 @@ export default function GetStartedPage() {
         </div>
       </section>
     </main>
+    <SiteFooter />
+    </>
   );
 }

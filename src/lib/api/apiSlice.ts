@@ -213,6 +213,48 @@ export const api = createApi({
         { type: "File", id: `LIST-${arg.workspaceId}` },
       ],
     }),
+    renameFile: builder.mutation<FileItem, { fileId: string; workspaceId: string; filename: string }>({
+      query: ({ fileId, filename }) => ({ url: `/files/${fileId}`, method: "PATCH", body: { filename } }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "File", id: arg.fileId },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    replaceFilePresign: builder.mutation<
+      PresignResult,
+      { fileId: string; workspaceId: string; filename: string; contentType: string; sizeBytes: number }
+    >({
+      query: ({ fileId, filename, contentType, sizeBytes }) => ({
+        url: `/files/${fileId}/replace/presign`,
+        method: "POST",
+        body: { filename, content_type: contentType, size_bytes: sizeBytes },
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: "File", id: `LIST-${arg.workspaceId}` }],
+    }),
+    replaceFileConfirm: builder.mutation<FileItem, { fileId: string; workspaceId: string }>({
+      query: ({ fileId }) => ({ url: `/files/${fileId}/replace/confirm`, method: "POST" }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "File", id: arg.fileId },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    replaceFileCancel: builder.mutation<FileItem, { fileId: string; workspaceId: string }>({
+      query: ({ fileId }) => ({ url: `/files/${fileId}/replace/cancel`, method: "POST" }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "File", id: arg.fileId },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    retryFile: builder.mutation<FileItem, { fileId: string; workspaceId: string }>({
+      query: ({ fileId }) => ({ url: `/files/${fileId}/retry`, method: "POST" }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "File", id: arg.fileId },
+        { type: "File", id: `LIST-${arg.workspaceId}` },
+      ],
+    }),
+    getFileDownloadUrl: builder.mutation<{ url: string }, string>({
+      query: (fileId) => ({ url: `/files/${fileId}/download`, method: "GET" }),
+    }),
     deleteFile: builder.mutation<{ ok: boolean }, { fileId: string; workspaceId: string }>({
       query: ({ fileId }) => ({ url: `/files/${fileId}`, method: "DELETE" }),
       invalidatesTags: (result, error, arg) => [
@@ -519,6 +561,12 @@ export const {
   useCancelUploadMutation,
   useFailUploadMutation,
   useDeleteFileMutation,
+  useRenameFileMutation,
+  useReplaceFilePresignMutation,
+  useReplaceFileConfirmMutation,
+  useReplaceFileCancelMutation,
+  useRetryFileMutation,
+  useGetFileDownloadUrlMutation,
   useGetChatsQuery,
   useCreateChatMutation,
   useRenameChatMutation,

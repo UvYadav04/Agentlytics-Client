@@ -1,0 +1,861 @@
+"use client";
+
+import Link from "next/link";
+import { useRef } from "react";
+import {
+  Activity,
+  BarChart3,
+  Bot,
+  BookOpen,
+  Calculator,
+  CheckCircle2,
+  Cog,
+  Database,
+  Filter,
+  FileSearch,
+  FileText,
+  Layers,
+  Link2,
+  Lock,
+  Quote,
+  Rocket,
+  Search,
+  Sparkles,
+  Table2,
+} from "lucide-react";
+import { useGetMeQuery } from "@/lib/api/apiSlice";
+import Reveal from "@/components/Reveal";
+import SpotlightCursor from "@/components/cursor/SpotlightCursor";
+import FaqList from "@/components/marketing/FaqList";
+import PrimaryCTA from "@/components/marketing/PrimaryCTA";
+import SiteFooter from "@/components/marketing/SiteFooter";
+import SolutionsGrid from "@/components/marketing/SolutionsGrid";
+import { HOME_FAQS } from "@/content/homeFaqs";
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Add your data",
+    body: "Upload CSV, Excel, PDF or TXT files, or connect PostgreSQL or MongoDB with a read-only user. Each workspace stays private and isolated.",
+    color: "bg-accent",
+  },
+  {
+    n: "02",
+    title: "Ask in plain English",
+    body: "“Which region underperformed last quarter?” “Summarize the contract's payment terms.” No query language required.",
+    color: "bg-gold",
+  },
+  {
+    n: "03",
+    title: "Agents investigate",
+    body: "Specialized agents run real, deterministic tools against your files, each confined to its own isolated context.",
+    color: "bg-plum",
+  },
+  {
+    n: "04",
+    title: "Get a traceable answer",
+    body: "Every claim links back to the exact file, row, or page it came from - plus charts and reports when useful.",
+    color: "bg-clay",
+  },
+];
+
+const FEATURES = [
+  {
+    title: "Isolated agents",
+    body: "Specialized agents investigate independently, each confined to its own context, so noise from one line of inquiry never pollutes another.",
+    color: "bg-accent",
+    icon: Layers,
+  },
+  {
+    title: "Deterministic tools",
+    body: "Agents don't free-associate numbers - every lookup runs through a deterministic tool, and the model only reasons over real results.",
+    color: "bg-clay",
+    icon: Cog,
+  },
+  {
+    title: "Full traceability",
+    body: "Every finding carries a reference back to a source file, row, or page - an audit trail attached to every answer.",
+    color: "bg-plum",
+    icon: Link2,
+  },
+  {
+    title: "Charts & reports",
+    body: "Ask for a dashboard or a written report and get one generated on the spot, saved to your workspace for later.",
+    color: "bg-gold",
+    icon: BarChart3,
+  },
+  {
+    title: "Private workspaces",
+    body: "Files, chats, and memory are scoped to a workspace you control - nothing leaks across projects or teams.",
+    color: "bg-rust",
+    icon: Lock,
+  },
+  {
+    title: "Streamed investigations",
+    body: "Watch the agents work in real time, with the option to cancel an investigation mid-flight if it's off track.",
+    color: "bg-accent-dark",
+    icon: Activity,
+  },
+];
+
+const WITHOUT = [
+  "Trusting a chatbot's confident-sounding guess",
+  "Manually re-checking every number against the spreadsheet",
+  "No record of which file an answer actually came from",
+  "One generic prompt for every kind of file",
+];
+
+const WITH = [
+  "Every claim linked to a row, page, or file",
+  "Deterministic tool calls, not guesses",
+  "A full investigation trace you can replay",
+  "Specialized agents, each in an isolated context",
+];
+
+const PERSONAS = [
+  {
+    title: "Data & ops teams",
+    body: "Get straight answers out of messy exports without writing a query.",
+    text: "text-accent-dark",
+    bar: "bg-accent-dark",
+    icon: Database,
+  },
+  {
+    title: "Finance & analysts",
+    body: "Cross-check figures and reconcile numbers across files in minutes.",
+    text: "text-clay",
+    bar: "bg-clay",
+    icon: Calculator,
+  },
+  {
+    title: "Researchers",
+    body: "Pull findings out of long PDFs with citations back to the exact page.",
+    text: "text-plum",
+    bar: "bg-plum",
+    icon: BookOpen,
+  },
+  {
+    title: "Founders & PMs",
+    body: "Skip the SQL, ask the question, get a chart you can drop in a deck.",
+    text: "text-rust",
+    bar: "bg-rust",
+    icon: Rocket,
+  },
+];
+
+const FILE_TYPES = ["CSV", "Excel", "PDF", "TXT", "PostgreSQL", "MongoDB"];
+
+const STATS = [
+  { value: "100%", label: "Claims traced to a source file", color: "text-clay" },
+  { value: "6", label: "Data sources: 4 file types + 2 databases", color: "text-plum" },
+  { value: "Live", label: "Streamed investigation trace", color: "text-rust" },
+];
+
+function MiniBarChart() {
+  const data = [35, 62, 48, 90, 73, 55, 88];
+  const max = Math.max(...data);
+  return (
+    <div className="flex h-24 items-end gap-1.5">
+      {data.map((v, i) => (
+        <span
+          key={i}
+          className="flex-1 rounded-t-sm bg-gradient-to-t from-accent to-gold"
+          style={{ height: `${(v / max) * 100}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function MiniAreaChart() {
+  const data = [20, 35, 30, 50, 45, 65, 60, 80, 75, 95];
+  const w = 200;
+  const h = 96;
+  const max = Math.max(...data);
+  const step = w / (data.length - 1);
+  const line = data.map((v, i) => `${i * step},${h - (v / max) * h}`).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-24 w-full text-plum" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="homeAreaFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#homeAreaFill)" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MiniDonutChart() {
+  const segments = [
+    { value: 42, stroke: "stroke-accent", dot: "bg-accent" },
+    { value: 28, stroke: "stroke-gold", dot: "bg-gold" },
+    { value: 18, stroke: "stroke-plum", dot: "bg-plum" },
+    { value: 12, stroke: "stroke-clay", dot: "bg-clay" },
+  ];
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  const r = 34;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+
+  return (
+    <div className="flex h-24 items-center justify-center gap-4">
+      <svg viewBox="0 0 80 80" className="h-24 w-24 -rotate-90">
+        <circle cx="40" cy="40" r={r} fill="none" strokeWidth="10" className="stroke-border" />
+        {segments.map((seg, i) => {
+          const len = (seg.value / total) * circumference;
+          const el = (
+            <circle
+              key={i}
+              cx="40"
+              cy="40"
+              r={r}
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={`${len} ${circumference - len}`}
+              strokeDashoffset={-offset}
+              className={seg.stroke}
+            />
+          );
+          offset += len;
+          return el;
+        })}
+      </svg>
+      <ul className="space-y-1.5 text-xs text-muted">
+        {segments.map((seg, i) => (
+          <li key={i} className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${seg.dot}`} />
+            {seg.value}%
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const CHARTS = [
+  { title: "Revenue by region", body: "Bar charts from a single question.", chart: MiniBarChart },
+  { title: "Trend over time", body: "Spot a trajectory at a glance.", chart: MiniAreaChart },
+  { title: "Category breakdown", body: "See how a total splits up.", chart: MiniDonutChart },
+];
+
+function CTAButton() {
+  return <PrimaryCTA guestLabel="Get started" />;
+}
+
+function ConnectDatabaseButton() {
+  const { data: user } = useGetMeQuery();
+  return (
+    <Link
+      href={user ? "/chat?connect=database" : "/get-started"}
+      className="flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3 font-medium text-text shadow-card transition-all hover:border-accent hover:text-accent-dark"
+    >
+      <Database className="size-4" />
+      Connect a database
+    </Link>
+  );
+}
+
+function HeroIllustration() {
+  const agentRows = [
+    { icon: FileSearch, label: "Reading sales.parquet", tone: "text-accent-dark" },
+    { icon: Bot, label: "Agent cross-checking totals", tone: "text-plum" },
+    { icon: Sparkles, label: "Drafting the answer", tone: "text-gold" },
+  ];
+
+  return (
+    <div className="relative mx-auto w-full max-w-md lg:mx-0">
+      <div className="glow-blob animate-float-b -top-10 right-0 h-56 w-56 bg-plum opacity-30" />
+
+      <div className="relative z-10 overflow-hidden rounded-card border border-accent/15 bg-card shadow-[0_20px_60px_-20px_rgba(204,120,92,0.35)]">
+        <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-rust/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-gold/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-plum/70" />
+          <span className="ml-3 flex items-center gap-1.5 text-xs text-muted">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            Investigating live
+          </span>
+        </div>
+
+        <div className="space-y-3 p-5">
+          {agentRows.map((row) => (
+            <div
+              key={row.label}
+              className="flex items-center gap-3 rounded-lg border border-border bg-bg px-3 py-2.5"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card shadow-card">
+                <row.icon className={`h-4 w-4 animate-icon-breathe ${row.tone}`} strokeWidth={1.75} />
+              </span>
+              <span className="text-xs font-medium text-text">{row.label}</span>
+            </div>
+          ))}
+
+          <div className="pt-1">
+            <MiniBarChart />
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute -right-6 -top-6 z-20 hidden items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card sm:flex">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold shadow-card">
+          <BarChart3 className="h-4 w-4 text-white" />
+        </span>
+        <div className="leading-tight">
+          <div className="text-xs font-semibold">Chart generated</div>
+          <div className="text-[11px] text-muted">Revenue by region</div>
+        </div>
+      </div>
+
+      <div className="absolute -bottom-6 -left-4 z-20 flex items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent shadow-card">
+          <CheckCircle2 className="h-4 w-4 text-white" />
+        </span>
+        <div className="leading-tight">
+          <div className="text-xs font-semibold">Answer verified</div>
+          <div className="text-[11px] text-muted">sales.parquet - row 118</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function HomeView() {
+  const heroRef = useRef<HTMLElement>(null);
+
+  return (
+    <>
+    <main>
+      <section
+        ref={heroRef}
+        className="relative flex min-h-[88vh] flex-col justify-center overflow-hidden px-6 py-16"
+      >
+        <div className="glow-blob animate-float-a -top-24 -left-24 h-96 w-96 bg-accent" />
+        <div className="glow-blob animate-float-b top-32 -right-20 h-80 w-80 bg-gold" />
+        <div className="glow-blob animate-float-c bottom-0 left-1/3 h-72 w-72 bg-plum" />
+        <SpotlightCursor
+          config={{
+            containerRef: heroRef,
+            overlayColor: "245, 244, 238",
+            overlayOpacity: 0.15,
+            glowColor: "204, 120, 92",
+            spotlightIntensity: 0.4,
+            spotlightSize: 260,
+          }}
+        />
+
+        <div className="relative z-20 mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-2 lg:gap-10">
+          <div className="text-center lg:text-left">
+            <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-4 py-1.5 text-xs text-muted shadow-card backdrop-blur lg:mx-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              No answer without evidence traced to a real file
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-4xl xl:text-5xl font-bold tracking-tight leading-tight">
+              Talk to your data.
+              <br />
+              <span className="bg-gradient-to-r from-accent to-rust bg-clip-text text-transparent">
+                AI data analysis
+              </span>{" "}
+              for CSV, Excel, PDF &amp; databases.
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-muted text-sm sm:text-base lg:mx-0">
+              Agentlytics is an AI data analyzer. Upload a spreadsheet, a
+              contract or a stack of PDFs - or connect PostgreSQL or MongoDB -
+              ask in plain English, and get charts, reports and answers traced
+              back to the exact file, row or page they came from.
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+              <CTAButton />
+              <ConnectDatabaseButton />
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 text-xs text-muted lg:justify-start">
+              <span>Works with</span>
+              {FILE_TYPES.map((t) => (
+                <span
+                  key={t}
+                  className="animate-chip-drift rounded-full border border-border bg-card px-3 py-1 font-medium text-text"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <HeroIllustration />
+        </div>
+      </section>
+
+      <section className="relative z-30 -mt-10 px-6">
+        <Reveal className="mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-card border border-border bg-card shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {STATS.map((s) => (
+              <div key={s.label} className="p-6 text-center">
+                <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="mt-1 text-xs text-muted leading-relaxed">
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="data-sources" className="px-6 pt-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              One AI data analyzer for every data source
+            </h2>
+            <p className="mt-3 text-muted">
+              Spreadsheets, documents and live databases in the same
+              workspace. Pick where your data lives to see what you can ask.
+            </p>
+          </div>
+          <div className="mt-12">
+            <SolutionsGrid wide />
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-20">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Charts that tell the story
+          </h2>
+          <p className="mt-3 text-muted">
+            Not just a number - a real chart, generated the moment you ask
+            for a breakdown and saved to your workspace alongside the
+            investigation that produced it.
+          </p>
+        </Reveal>
+
+        <div className="mx-auto mt-12 grid max-w-5xl gap-5 sm:grid-cols-3">
+          {CHARTS.map((c, i) => (
+            <Reveal key={c.title} delay={i * 100}>
+              <div className="h-full rounded-card border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-[0_0_35px_-12px_rgba(204,120,92,0.4)]">
+                <c.chart />
+                <h3 className="mt-4 font-semibold">{c.title}</h3>
+                <p className="mt-1.5 text-sm text-muted leading-relaxed">
+                  {c.body}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal>
+              <span className="inline-flex items-center gap-2 rounded-full bg-teal px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                CSV &amp; Excel
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+                Turn spreadsheets into decisions.
+              </h2>
+              <p className="mt-4 text-muted leading-relaxed">
+                Drop in a messy export, a multi-tab workbook, or a pile of
+                CSVs and ask for the number you actually need. Every total,
+                filter, and pivot runs as a real computation against your
+                data - never eyeballed, never approximated.
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: Table2, text: "Every row stays queryable, across every sheet" },
+                  { icon: Calculator, text: "Real computations, not guessed-at numbers" },
+                  { icon: Filter, text: "Filter, group, and pivot with a sentence" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-2.5 text-text">
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0_20px_60px_-25px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+                  <Table2 className="h-4 w-4 text-teal" />
+                  <span className="text-xs font-medium text-muted">
+                    regional-sales-q3.xlsx
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border text-xs">
+                    {["Region", "Target", "Actual"].map((h) => (
+                      <div key={h} className="bg-bg px-3 py-2 font-semibold text-muted">
+                        {h}
+                      </div>
+                    ))}
+                    {[
+                      ["East", "$480K", "$512K"],
+                      ["Central", "$390K", "$401K"],
+                      ["West", "$560K", "$412K"],
+                    ].map((row, ri) =>
+                      row.map((cell, ci) => (
+                        <div
+                          key={`${ri}-${ci}`}
+                          className={`bg-card px-3 py-2 ${
+                            ri === 2 && ci === 2 ? "font-semibold text-rust" : "text-text"
+                          }`}
+                        >
+                          {cell}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-muted">
+                    <span>Computed live from the workbook</span>
+                    <span className="rounded-full bg-teal/10 px-2 py-0.5 font-medium text-teal">
+                      West missed by 26%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-card/60">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal className="lg:order-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-plum px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                PDFs &amp; documents
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+                Buried in a 90-page contract? Not anymore.
+              </h2>
+              <p className="mt-4 text-muted leading-relaxed">
+                Reports, contracts, scanned filings - long documents get
+                parsed, chunked, and indexed so a question finds the exact
+                paragraph that answers it, not just the file it's hiding in.
+              </p>
+              <ul className="mt-5 space-y-2.5 text-sm">
+                {[
+                  { icon: FileText, text: "Reads contracts, reports, and scanned PDFs" },
+                  { icon: Search, text: "Finds the paragraph, not just the file" },
+                  { icon: Quote, text: "Cites the exact page for every claim" },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-2.5 text-text">
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-plum" />
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+
+            <Reveal delay={120} className="lg:order-1">
+              <div className="overflow-hidden rounded-card border border-border bg-card shadow-[0_20px_60px_-25px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+                  <FileText className="h-4 w-4 text-plum" />
+                  <span className="text-xs font-medium text-muted">
+                    vendor-agreement.pdf
+                  </span>
+                  <span className="ml-auto rounded-full bg-plum/10 px-2 py-0.5 text-[11px] font-medium text-plum">
+                    Page 12
+                  </span>
+                </div>
+                <div className="space-y-2.5 p-5">
+                  <div className="h-2.5 w-11/12 rounded bg-border/70" />
+                  <div className="h-2.5 w-full rounded bg-border/70" />
+                  <div className="rounded-lg border-l-2 border-plum bg-plum/5 px-3 py-2 text-sm leading-relaxed text-text">
+                    &ldquo;Either party may terminate this agreement with{" "}
+                    <strong>60 days written notice</strong>.&rdquo;
+                  </div>
+                  <div className="h-2.5 w-4/5 rounded bg-border/70" />
+                  <div className="h-2.5 w-2/3 rounded bg-border/70" />
+                  <div className="flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted">
+                    <span>Section 8.2 - Termination</span>
+                    <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-accent-dark">
+                      Cited in answer
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      <section id="product" className="mt-16 border-t border-border bg-card/60">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              A conversation, not a query builder
+            </h2>
+            <p className="mt-3 text-muted">
+              Ask a question the way you'd ask a coworker. Watch the agents
+              investigate live, then get an answer with the evidence attached.
+            </p>
+          </Reveal>
+
+          <Reveal delay={120} className="relative mt-14">
+            <div className="glow-blob h-64 w-64 bg-accent opacity-30 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="relative mx-auto max-w-3xl overflow-hidden rounded-card border border-accent/15 bg-card shadow-[0_0_50px_-20px_rgba(204,120,92,0.35)] transition-shadow hover:shadow-[0_0_60px_-15px_rgba(204,120,92,0.55)]">
+              <div className="flex items-center gap-1.5 border-b border-border px-4 py-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-rust/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-gold/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-plum/70" />
+                <span className="ml-3 text-xs text-muted">
+                  Q3-sales-report.chat
+                </span>
+              </div>
+
+              <div className="space-y-4 p-6">
+                <div className="ml-auto max-w-sm rounded-2xl rounded-tr-sm bg-accent px-4 py-2.5 text-sm text-white">
+                  Which region underperformed last quarter, and by how much?
+                </div>
+
+                <div className="space-y-1.5 text-xs text-muted">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-clay" />
+                    Running a deterministic query against sales.parquet
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-plum" />
+                    Comparing quarter-over-quarter totals by region
+                  </div>
+                </div>
+
+                <div className="max-w-lg rounded-2xl rounded-tl-sm border border-border bg-bg px-4 py-3 text-sm leading-relaxed">
+                  The <strong>West region</strong> underperformed, closing Q3
+                  at <strong>$412K</strong> against a $560K target - a{" "}
+                  <strong>26% miss</strong>. East and Central both beat
+                  target.
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-dark">
+                      sales.parquet - rows 118-204
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {[40, 70, 100, 55, 85, 30].map((h, i) => (
+                    <span
+                      key={i}
+                      className="flex h-16 items-end rounded-md bg-bg p-1"
+                    >
+                      <span
+                        className="w-full rounded-sm bg-gradient-to-t from-accent to-gold"
+                        style={{ height: `${h}%` }}
+                      />
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              How it works
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted">
+              From raw file to a cited answer, in one conversation.
+            </p>
+          </Reveal>
+
+          <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((step, i) => (
+              <Reveal key={step.n} delay={i * 120}>
+                <div className="h-full rounded-card border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-[0_0_35px_-12px_rgba(204,120,92,0.4)]">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white shadow-card ${step.color}`}
+                  >
+                    {step.n}
+                  </div>
+                  <h3 className="mt-4 font-semibold">{step.title}</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">
+                    {step.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-t border-border bg-card/60">
+        <div className="glow-blob animate-float-c -top-10 -right-16 h-72 w-72 bg-gold opacity-20" />
+        <div className="relative mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Built for careful analysis
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted">
+              Every design decision favors verifiable answers over
+              confident-sounding ones.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 text-left">
+            {FEATURES.map((card, i) => (
+              <Reveal key={card.title} delay={(i % 3) * 100}>
+                <div className="relative h-full overflow-hidden rounded-card border border-border bg-card shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-[0_0_40px_-10px_rgba(204,120,92,0.4)]">
+                  <span className={`absolute inset-x-0 top-0 h-1 ${card.color}`} />
+                  <div className="p-6">
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg shadow-card ${card.color}`}
+                    >
+                      <card.icon className="h-4 w-4 animate-icon-breathe text-white" />
+                    </span>
+                    <h3 className="mt-4 font-semibold">{card.title}</h3>
+                    <p className="mt-2 text-sm text-muted leading-relaxed">
+                      {card.body}
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-5xl px-6 py-24">
+          <Reveal className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Why not just ask a chatbot?
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted">
+              Generic chatbots guess. Agentlytics investigates.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-6 sm:grid-cols-2">
+            <Reveal>
+              <div className="h-full rounded-card border border-dashed border-border bg-bg p-7">
+                <h3 className="text-sm font-semibold text-muted">
+                  Without Agentlytics
+                </h3>
+                <ul className="mt-4 space-y-3">
+                  {WITHOUT.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-3 text-sm text-muted"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-[11px] text-muted">
+                        &times;
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <div className="relative h-full overflow-hidden rounded-card border border-accent/30 bg-accent-soft/40 p-7 shadow-[0_0_50px_-15px_rgba(204,120,92,0.5)]">
+                <span className="absolute right-5 top-5 rounded-full bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                  Agentlytics
+                </span>
+                <h3 className="text-sm font-semibold text-accent-dark">
+                  With Agentlytics
+                </h3>
+                <ul className="mt-4 space-y-3">
+                  {WITH.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-3 text-sm text-text"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-white">
+                        &#10003;
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-t border-border bg-card/60">
+        <div className="glow-blob animate-float-a -bottom-16 -left-16 h-72 w-72 bg-plum opacity-20" />
+        <div className="relative mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Who it's for
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted">
+              Anyone who's tired of re-deriving the same numbers by hand.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {PERSONAS.map((p, i) => (
+              <Reveal key={p.title} delay={i * 100}>
+                <div className="relative h-full overflow-hidden rounded-card border border-border bg-card p-6 pl-7 shadow-card transition-all hover:-translate-y-1 hover:shadow-[0_0_35px_-14px_rgba(0,0,0,0.25)]">
+                  <span className={`absolute inset-y-0 left-0 w-1.5 ${p.bar}`} />
+                  <p.icon className={`h-5 w-5 ${p.text}`} />
+                  <h3 className={`mt-2 font-semibold ${p.text}`}>{p.title}</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">
+                    {p.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="border-t border-border">
+        <div className="mx-auto max-w-3xl px-6 py-24">
+          <h2 className="text-center text-2xl sm:text-3xl font-bold tracking-tight">
+            Frequently asked questions
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-muted">
+            Everything you need to know about analyzing files and databases
+            with AI.
+          </p>
+          <div className="mt-10">
+            <FaqList faqs={HOME_FAQS} />
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-t border-border">
+        <div className="glow-blob animate-float-b top-0 right-1/4 h-80 w-80 bg-accent opacity-30" />
+        <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Stop taking the model's word for it.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted">
+              Create a workspace, upload your first file, and ask your first
+              question - free to start.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <CTAButton />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+    </main>
+    <SiteFooter />
+    </>
+  );
+}
