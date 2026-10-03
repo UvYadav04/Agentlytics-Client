@@ -15,9 +15,13 @@ import type {
   DatabaseConnectionDetail,
   DatabaseTestResult,
   DatabaseType,
+  FeedbackRating,
   FileItem,
   FileStatus,
+  MessageFeedback,
   RememberOption,
+  RetryMessageResult,
+  RetryMode,
   ReportDetail,
   UsageInfo,
   User,
@@ -322,6 +326,30 @@ export const api = createApi({
         body: { content, file_ids: fileIds ?? [], answer_to: answerTo ?? null },
       }),
     }),
+    retryMessage: builder.mutation<RetryMessageResult, { messageId: string; mode: RetryMode }>({
+      query: ({ messageId, mode }) => ({
+        url: `/messages/${messageId}/retry`,
+        method: "POST",
+        body: { mode },
+      }),
+    }),
+    setMessageFeedback: builder.mutation<
+      MessageFeedback | null,
+      {
+        messageId: string;
+        chatId: string;
+        rating: FeedbackRating | null;
+        reasons?: string[];
+        comment?: string | null;
+      }
+    >({
+      query: ({ messageId, rating, reasons, comment }) => ({
+        url: `/messages/${messageId}/feedback`,
+        method: "PUT",
+        body: { rating, reasons: reasons ?? [], comment: comment ?? null },
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: "Message", id: `LIST-${arg.chatId}` }],
+    }),
     getActiveInvestigation: builder.query<{ investigation_id: string | null }, string>({
       query: (chatId) => `/chats/${chatId}/active-investigation`,
       providesTags: (result, error, chatId) => [
@@ -575,6 +603,8 @@ export const {
   useSendMessageMutation,
   useGetActiveInvestigationQuery,
   useCancelInvestigationMutation,
+  useRetryMessageMutation,
+  useSetMessageFeedbackMutation,
   useGetChartQuery,
   useGetReportQuery,
   useGetDashboardQuery,

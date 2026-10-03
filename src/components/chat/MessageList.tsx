@@ -11,11 +11,12 @@ import {
   useGetFilesQuery,
   useGetReportQuery,
 } from "@/lib/api/apiSlice";
-import type { ChatMessage, PendingQuestion } from "@/lib/types";
+import type { ChatMessage, PendingQuestion, RetryMode } from "@/lib/types";
 import AutoHeightIframe from "@/components/AutoHeightIframe";
 import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
 import MarkdownTable from "./MarkdownTable";
+import MessageActions from "./MessageActions";
 import type { Components } from "react-markdown";
 
 const MARKDOWN_COMPONENTS: Components = { table: MarkdownTable };
@@ -178,6 +179,8 @@ export default function MessageList({
   onSend,
   onAnswer,
   onPendingQuestionChange,
+  onRetry,
+  retryingMessageId,
 }: {
   chatId: string;
   workspaceId: string | null;
@@ -190,6 +193,8 @@ export default function MessageList({
   onSend: (content: string, fileIds: string[]) => void;
   onAnswer: (answer: string, questionId: string) => Promise<void>;
   onPendingQuestionChange: (question: PendingQuestion | null) => void;
+  onRetry: (messageId: string, mode: RetryMode) => void;
+  retryingMessageId: string | null;
 }) {
   const busy = sending || !!liveInvestigationId;
 
@@ -263,7 +268,21 @@ export default function MessageList({
           key={m.id}
           className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
         >
-          <div className="max-w-2xl">
+          <div
+            className={`max-w-2xl ${
+              m.id === retryingMessageId ? "[&>*:not([data-retry-badge])]:opacity-50" : ""
+            }`}
+            aria-busy={m.id === retryingMessageId}
+          >
+            {m.id === retryingMessageId && (
+              <span
+                data-retry-badge
+                className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-medium text-accent-dark"
+              >
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                Regenerating this answer...
+              </span>
+            )}
             {m.role === "assistant" && m.investigation_id && (
               <InvestigationTrail investigationId={m.investigation_id} live={false} />
             )}
@@ -306,6 +325,15 @@ export default function MessageList({
 
             {workspaceId && (m.dashboard_ids?.length ?? 0) > 0 && (
               <DashboardLinks workspaceId={workspaceId} dashboardIds={m.dashboard_ids ?? []} />
+            )}
+
+            {m.role === "assistant" && !m.id.startsWith("pending-") && (
+              <MessageActions
+                message={m}
+                canRetry={idx === messages.length - 1}
+                retryDisabled={busy}
+                onRetry={(mode) => onRetry(m.id, mode)}
+              />
             )}
 
             {m.role === "assistant" &&

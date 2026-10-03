@@ -23,10 +23,16 @@ export default function MoreMenu({
   items,
   label = "More options",
   buttonClassName = "",
+  icon: TriggerIcon = MoreHorizontal,
+  disabled = false,
+  align = "end",
 }: {
   items: MoreMenuItem[];
   label?: string;
   buttonClassName?: string;
+  icon?: ComponentType<{ className?: string }>;
+  disabled?: boolean;
+  align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -45,9 +51,10 @@ export default function MoreMenu({
     const menuHeight = menuRef.current?.offsetHeight ?? 0;
     const spaceBelow = window.innerHeight - rect.bottom;
     const top = spaceBelow < menuHeight + GAP * 2 && rect.top > menuHeight ? rect.top - menuHeight - GAP : rect.bottom + GAP;
-    const left = Math.min(Math.max(8, rect.right - MENU_WIDTH), window.innerWidth - MENU_WIDTH - 8);
+    const preferred = align === "start" ? rect.left : rect.right - MENU_WIDTH;
+    const left = Math.min(Math.max(8, preferred), window.innerWidth - MENU_WIDTH - 8);
     setPosition({ top, left });
-  }, [open]);
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,6 +113,7 @@ export default function MoreMenu({
         title={label}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
           setOpen((v) => !v);
@@ -116,11 +124,11 @@ export default function MoreMenu({
             setOpen(true);
           }
         }}
-        className={`flex size-6 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-border/60 hover:text-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent ${
+        className={`flex size-6 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-border/60 hover:text-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
           open ? "bg-border/60 text-text" : ""
         } ${buttonClassName}`}
       >
-        <MoreHorizontal className="size-4" />
+        <TriggerIcon className="size-4" />
       </button>
       {open &&
         typeof document !== "undefined" &&

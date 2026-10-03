@@ -57,7 +57,30 @@ export type ChatMessage = {
   files_used: string[];
   follow_up_questions: string[];
   dashboard_ids?: string[];
+  reply_to?: string | null;
+  version?: number;
+  retry_of?: string | null;
+  retry_mode?: RetryMode | null;
+  feedback?: MessageFeedback | null;
   created_at: string;
+};
+
+export type RetryMode = "regenerate" | "think_harder" | "show_reasoning" | "more_detail" | "more_concise" | "simpler";
+
+export type FeedbackRating = "like" | "dislike";
+
+export type MessageFeedback = {
+  rating: FeedbackRating | null;
+  reasons: string[];
+  comment: string | null;
+  updated_at: string;
+};
+
+export type RetryMessageResult = {
+  investigation_id: string | null;
+  message_id: string;
+  limited: boolean;
+  limit_message: string | null;
 };
 
 export type InvestigationEvent = {

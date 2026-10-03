@@ -10,10 +10,11 @@ import {
   useGetMeQuery,
   useGetMessagesQuery,
   useGetWorkspacesQuery,
+  useRetryMessageMutation,
   useSendMessageMutation,
 } from "@/lib/api/apiSlice";
 import { useAppDispatch } from "@/lib/hooks";
-import type { ChatMessage, DatabaseConnection, PendingQuestion, Workspace } from "@/lib/types";
+import type { ChatMessage, DatabaseConnection, PendingQuestion, RetryMode, Workspace } from "@/lib/types";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
 import WorkspaceSwitcher from "@/components/chat/WorkspaceSwitcher";
 import FilesPanel from "@/components/chat/FilesPanel";
@@ -58,6 +59,8 @@ function ChatPageInner() {
   const [sending, setSending] = useState(false);
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
   const [pendingQuestion, setPendingQuestion] = useState<PendingQuestion | null>(null);
+  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const retryingMessageRef = useRef<string | null>(null);
 
   const [leftSection, setLeftSection] = useState<"databases" | "files" | "chats" | null>("chats");
   const [connectDatabase, setConnectDatabase] = useState<{ reconnectTarget: DatabaseConnection | null } | null>(
@@ -67,6 +70,7 @@ function ChatPageInner() {
 
   const dispatch = useAppDispatch();
   const [sendMessage] = useSendMessageMutation();
+  const [retryMessage] = useRetryMessageMutation();
   const [cancelInvestigation] = useCancelInvestigationMutation();
   const [createChat] = useCreateChatMutation();
 
@@ -109,9 +113,15 @@ function ChatPageInner() {
   const showEmptyComposer =
     !!chatId && !messagesLoading && visibleMessages.length === 0 && !liveInvestigationId && !sending;
 
+  function clearRetry() {
+    retryingMessageRef.current = null;
+    setRetryingMessageId(null);
+  }
+
   function selectWorkspace(id: string) {
     setWorkspaceId(id);
     setChatId(null);
+    clearRetry();
     setLiveInvestigationId(null);
     setPendingQuestion(null);
     setRequestStartedAt(null);
@@ -120,6 +130,7 @@ function ChatPageInner() {
 
   function selectChat(id: string | null) {
     setChatId(id);
+    clearRetry();
     setCurrentMessages([]);
     setLiveInvestigationId(null);
     setPendingQuestion(null);
@@ -192,6 +203,31 @@ function ChatPageInner() {
       setCurrentMessages((prev) => prev.filter((m) => m.id !== tempId));
       setRequestStartedAt(null);
       throw err;
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleRetry(messageId: string, mode: RetryMode) {
+    if (!chatId || liveInvestigationId || sending) return;
+    setLimitMessage(null);
+    setSending(true);
+    setRequestStartedAt(Date.now());
+    retryingMessageRef.current = messageId;
+    setRetryingMessageId(messageId);
+    try {
+      const res = await retryMessage({ messageId, mode }).unwrap();
+      if (res.limited || !res.investigation_id) {
+        setLimitMessage(res.limit_message);
+        setRequestStartedAt(null);
+        clearRetry();
+        return;
+      }
+      setLiveInvestigationId(res.investigation_id);
+    } catch (err) {
+      setRequestStartedAt(null);
+      clearRetry();
+      setLimitMessage(extractErrorMessage(err, "Couldn't regenerate this answer. Please try again."));
     } finally {
       setSending(false);
     }
@@ -275,16 +311,24 @@ function ChatPageInner() {
       setLiveInvestigationId(null);
       return;
     }
+    const retriedMessageId = retryingMessageRef.current;
     dispatch(api.endpoints.getMessages.initiate(finishedChatId, { forceRefetch: true }))
       .then((result) => {
-        const fresh = result.data ?? [];
+        const fresh = result.data;
+        if (!fresh) return;
         setCurrentMessages((prev) => {
-          const known = new Set(prev.map((m) => m.id));
-          const additions = fresh.filter((m) => !known.has(m.id));
-          return additions.length ? [...prev, ...additions] : prev;
+          const freshIds = new Set(fresh.map((m) => m.id));
+          const pending = prev.filter((m) => m.id.startsWith("pending-") && !freshIds.has(m.id));
+          return [...fresh, ...pending];
         });
+        if (retriedMessageId && fresh.some((m) => m.id === retriedMessageId)) {
+          setLimitMessage("The answer wasn't regenerated, so your previous answer is still shown.");
+        }
       })
-      .finally(() => setLiveInvestigationId(null));
+      .finally(() => {
+        clearRetry();
+        setLiveInvestigationId(null);
+      });
 
     dispatch(
       api.util.invalidateTags([
@@ -378,6 +422,8 @@ function ChatPageInner() {
               onSend={handleSend}
               onAnswer={handleAnswer}
               onPendingQuestionChange={setPendingQuestion}
+              onRetry={handleRetry}
+              retryingMessageId={retryingMessageId}
             />
             <InputBar
               workspaceId={workspaceId ?? ""}
