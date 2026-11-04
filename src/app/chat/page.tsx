@@ -16,17 +16,16 @@ import {
 import { useAppDispatch } from "@/lib/hooks";
 import type { ChatMessage, DatabaseConnection, PendingQuestion, RetryMode, Workspace } from "@/lib/types";
 import GoogleLoginButton from "@/components/GoogleLoginButton";
-import WorkspaceSwitcher from "@/components/chat/WorkspaceSwitcher";
-import FilesPanel from "@/components/chat/FilesPanel";
-import DatabasesPanel from "@/components/chat/DatabasesPanel";
+import ChatSidebar from "@/components/chat/sidebar/ChatSidebar";
+import type { SidebarTab } from "@/components/chat/sidebar/types";
 import ConnectDatabaseModal from "@/components/database/ConnectDatabaseModal";
-import ChatsPanel from "@/components/chat/ChatsPanel";
 import MessageList from "@/components/chat/MessageList";
 import InputBar from "@/components/chat/InputBar";
 import ChatLanding from "@/components/chat/ChatLanding";
 import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
 import FileViewerProvider from "@/components/files/FileViewerProvider";
+import { PanelLeftOpen } from "lucide-react";
 
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
@@ -63,7 +62,8 @@ function ChatPageInner() {
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
   const retryingMessageRef = useRef<string | null>(null);
 
-  const [leftSection, setLeftSection] = useState<"databases" | "files" | "chats" | null>("chats");
+  const [activeTab, setActiveTab] = useState<SidebarTab>("chats");
+  const [drawerOpen, setDrawerOpen] = useState(true);
   const [connectDatabase, setConnectDatabase] = useState<{ reconnectTarget: DatabaseConnection | null } | null>(
     () => (searchParams.get("connect") === "database" ? { reconnectTarget: null } : null)
   );
@@ -365,35 +365,42 @@ function ChatPageInner() {
   return (
     <FileViewerProvider>
     <div className="flex h-[calc(100vh-57px)] bg-bg">
-      <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto p-3">
-        <WorkspaceSwitcher selectedId={workspaceId} onSelect={selectWorkspace} />
-        {workspaceId && (
-          <DatabasesPanel
-            workspaceId={workspaceId}
-            open={leftSection === "databases"}
-            onToggle={() => setLeftSection((s) => (s === "databases" ? null : "databases"))}
-            onConnect={(reconnectTarget) => setConnectDatabase({ reconnectTarget: reconnectTarget ?? null })}
-          />
-        )}
-        {workspaceId && (
-          <FilesPanel
-            workspaceId={workspaceId}
-            open={leftSection === "files"}
-            onToggle={() => setLeftSection((s) => (s === "files" ? null : "files"))}
-          />
-        )}
-        {workspaceId && (
-          <ChatsPanel
-            workspaceId={workspaceId}
-            selectedId={chatId}
-            onSelect={selectChat}
-            open={leftSection === "chats"}
-            onToggle={() => setLeftSection((s) => (s === "chats" ? null : "chats"))}
-          />
-        )}
-      </aside>
+      <ChatSidebar
+        workspaceId={workspaceId}
+        workspaces={workspaces}
+        chatId={chatId}
+        activeTab={activeTab}
+        drawerOpen={drawerOpen}
+        onTabChange={setActiveTab}
+        onToggleDrawer={() => setDrawerOpen((prev) => !prev)}
+        onSelectWorkspace={selectWorkspace}
+        onSelectChat={selectChat}
+        onNewChat={handleNewChat}
+        onConnectDatabase={(reconnectTarget) =>
+          setConnectDatabase({ reconnectTarget: reconnectTarget ?? null })
+        }
+      />
 
-      <main className="flex flex-1 min-w-0 flex-col">
+      <main className="flex flex-1 min-w-0 flex-col overflow-hidden">
+        {/* Chat Header Bar when chat is active */}
+        {chatId && (
+          <div className="flex h-11 shrink-0 items-center justify-between border-b border-border bg-card/40 px-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {!drawerOpen && (
+                <button
+                  onClick={() => setDrawerOpen(true)}
+                  title="Open sidebar (Ctrl+B)"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-bg hover:text-text"
+                >
+                  <PanelLeftOpen className="size-4" />
+                </button>
+              )}
+              <span className="truncate text-xs font-semibold text-text">
+                {activeChatTitle || "Chat Conversation"}
+              </span>
+            </div>
+          </div>
+        )}
 
         {limitMessage && (
           <div className="border-b border-border bg-gold/15 px-4 py-2 text-center text-sm text-accent-dark">
@@ -462,11 +469,14 @@ function ChatPageInner() {
           workspaceId={workspaceId}
           reconnectTarget={connectDatabase.reconnectTarget}
           onClose={() => setConnectDatabase(null)}
-          onConnected={() => setLeftSection("databases")}
+          onConnected={() => {
+            setActiveTab("databases");
+            setDrawerOpen(true);
+          }}
         />
       )}
 
-      {workspaceId && (
+      {workspaceId && rightSection && (
         <DashboardPanel
           workspaceId={workspaceId}
           section={rightSection}
