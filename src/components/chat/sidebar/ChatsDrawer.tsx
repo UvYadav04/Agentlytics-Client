@@ -87,12 +87,12 @@ export default function ChatsDrawer({
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#13151b] text-[#d1d5db]">
+    <div className="flex h-full flex-col bg-card text-text">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1e212b] px-4 py-3.5">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold tracking-tight text-white">Chats</span>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+          <span className="text-sm font-bold tracking-tight text-text">Chats</span>
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-dark">
             {chats.length}
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function ChatsDrawer({
           <button
             onClick={onClose}
             aria-label="Close panel"
-            className="rounded-lg p-1 text-[#9ca3af] hover:bg-white/[0.08] hover:text-white"
+            className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
             title="Close drawer"
           >
             <PanelLeftClose className="size-4" />
@@ -118,19 +118,19 @@ export default function ChatsDrawer({
       </div>
 
       {/* Search Input */}
-      <div className="border-b border-[#1e212b] p-3">
+      <div className="border-b border-border/70 p-3">
         <div className="relative flex items-center">
-          <Search className="pointer-events-none absolute left-3 size-3.5 text-[#6b7280]" />
+          <Search className="pointer-events-none absolute left-3 size-3.5 text-muted" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chats..."
-            className="w-full rounded-xl border border-[#262a38] bg-[#1a1d26] py-1.5 pl-8 pr-7 text-xs text-white placeholder-[#6b7280] outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+            className="w-full rounded-xl border border-border bg-bg/70 py-1.5 pl-8 pr-7 text-xs text-text placeholder-muted outline-none transition-colors focus:border-accent focus:bg-card focus:ring-1 focus:ring-accent"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 rounded p-0.5 text-[#9ca3af] hover:text-white"
+              className="absolute right-2.5 rounded p-0.5 text-muted hover:text-text"
             >
               <X className="size-3" />
             </button>
@@ -140,7 +140,7 @@ export default function ChatsDrawer({
 
       {/* Error alert */}
       {errorMessage && (
-        <div className="mx-3 mt-2 rounded-xl bg-rust/20 border border-rust/30 p-2 text-xs text-rust">
+        <div className="mx-3 mt-2 rounded-xl bg-rust/10 border border-rust/20 p-2 text-xs text-rust">
           {errorMessage}
         </div>
       )}
@@ -148,19 +148,19 @@ export default function ChatsDrawer({
       {/* Chats List */}
       <div className="flex-1 overflow-y-auto p-2">
         {filteredChats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-4 py-12 text-center text-xs text-[#9ca3af]">
+          <div className="flex flex-col items-center justify-center px-4 py-12 text-center text-xs text-muted">
             {searchQuery ? (
               <p>No chats matching &quot;{searchQuery}&quot;</p>
             ) : (
               <>
-                <p className="font-medium text-white">No chats yet</p>
-                <p className="mt-1 text-[11px] text-[#6b7280]">
+                <p className="font-medium text-text">No chats yet</p>
+                <p className="mt-1 text-[11px] text-muted">
                   Start an investigation by asking any question or creating a new chat.
                 </p>
                 <button
                   onClick={handleCreateNewChat}
                   disabled={creating}
-                  className="mt-3 rounded-lg bg-accent/20 px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+                  className="mt-3 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-dark transition-colors hover:bg-accent hover:text-white"
                 >
                   + Create Chat
                 </button>
@@ -178,8 +178,8 @@ export default function ChatsDrawer({
                   key={c.id}
                   className={`group relative flex items-center gap-1 rounded-xl px-2.5 py-2 transition-all ${
                     isSelected
-                      ? "bg-[#1f2330] font-semibold text-white ring-1 ring-white/10"
-                      : "text-[#d1d5db] hover:bg-white/[0.05] hover:text-white"
+                      ? "bg-accent-soft font-semibold text-accent-dark shadow-sm ring-1 ring-accent/20"
+                      : "text-text hover:bg-bg"
                   }`}
                 >
                   {isEditing ? (
@@ -192,7 +192,7 @@ export default function ChatsDrawer({
                         if (e.key === "Enter") commitRename(c.id);
                         if (e.key === "Escape") setEditingId(null);
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-accent bg-[#1a1d26] px-2 py-1 text-xs text-white outline-none focus:ring-1 focus:ring-accent"
+                      className="min-w-0 flex-1 rounded-lg border border-accent bg-card px-2 py-1 text-xs text-text outline-none focus:ring-1 focus:ring-accent"
                     />
                   ) : (
                     <>
@@ -203,7 +203,7 @@ export default function ChatsDrawer({
                       >
                         <span
                           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                            isSelected ? "bg-accent" : "bg-[#3d4253]"
+                            isSelected ? "bg-accent" : "bg-border"
                           }`}
                         />
                         <span className="truncate">{c.title}</span>
@@ -217,7 +217,7 @@ export default function ChatsDrawer({
                             startRename(c.id, c.title);
                           }}
                           aria-label="Rename chat"
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-[#9ca3af] hover:bg-white/10 hover:text-white"
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-accent-soft hover:text-accent-dark"
                           title="Rename"
                         >
                           <Pencil className="size-3" />
@@ -228,7 +228,7 @@ export default function ChatsDrawer({
                             handleDelete(c.id);
                           }}
                           aria-label="Delete chat"
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-[#9ca3af] hover:bg-rust/20 hover:text-rust"
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-rust/20 hover:text-rust"
                           title="Delete"
                         >
                           <Trash2 className="size-3" />

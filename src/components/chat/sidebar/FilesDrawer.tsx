@@ -41,9 +41,9 @@ const STATUS_LABEL: Record<FileItem["status"], string> = {
 const STATUS_COLOR: Record<FileItem["status"], string> = {
   pending_upload: "bg-gold/20 text-gold",
   processing: "bg-gold/20 text-gold",
-  ready: "bg-teal/20 text-teal",
-  failed: "bg-rust/20 text-rust",
-  cancelled: "bg-white/10 text-[#9ca3af]",
+  ready: "bg-accent-soft text-accent-dark",
+  failed: "bg-rust/15 text-rust",
+  cancelled: "bg-border text-muted",
 };
 
 const PROCESSING_STATUSES = new Set<FileItem["status"]>(["pending_upload", "processing"]);
@@ -235,10 +235,10 @@ function FileRow({
   ];
 
   return (
-    <li className="group rounded-xl border border-[#252836] bg-[#191c25] p-2.5 transition-all hover:border-accent/40 hover:bg-[#1d212c]">
+    <li className="group rounded-xl border border-border bg-card p-2.5 shadow-sm transition-all hover:border-accent/40 hover:bg-bg/40">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2.5">
-          <FileIcon className="mt-0.5 size-4 shrink-0 text-[#9ca3af] group-hover:text-accent" />
+          <FileIcon className="mt-0.5 size-4 shrink-0 text-muted group-hover:text-accent" />
           <div className="min-w-0 flex-1">
             {renaming ? (
               <input
@@ -250,18 +250,18 @@ function FileRow({
                   if (e.key === "Enter") submitRename();
                   if (e.key === "Escape") setRenaming(false);
                 }}
-                className="w-full rounded border border-accent bg-[#13151b] px-1.5 py-0.5 text-xs text-white outline-none"
+                className="w-full rounded border border-accent bg-bg px-1.5 py-0.5 text-xs text-text outline-none"
               />
             ) : (
               <div
-                className="truncate text-xs font-medium text-white cursor-pointer hover:text-accent"
+                className="truncate text-xs font-medium text-text cursor-pointer hover:text-accent"
                 title={file.filename}
                 onClick={() => file.status === "ready" && openFile(file.id)}
               >
                 {file.filename}
               </div>
             )}
-            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#9ca3af]">
+            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted">
               <span>{formatBytes(file.size_bytes ?? 0)}</span>
               <span>·</span>
               <span className={`rounded px-1.5 py-0.2 font-medium ${statusColor}`}>
@@ -276,7 +276,7 @@ function FileRow({
             <button
               onClick={() => openFile(file.id)}
               title="Preview"
-              className="rounded p-1 text-[#9ca3af] hover:bg-white/10 hover:text-white"
+              className="rounded p-1 text-muted hover:bg-bg hover:text-text"
             >
               <Eye className="size-3.5" />
             </button>
@@ -288,12 +288,12 @@ function FileRow({
       {rowError && <p className="mt-1 text-[10px] text-rust">{rowError}</p>}
 
       {confirmingDelete && (
-        <div className="mt-2 flex items-center justify-between rounded-lg bg-rust/20 border border-rust/30 p-2 text-xs text-rust">
+        <div className="mt-2 flex items-center justify-between rounded-lg bg-rust/10 border border-rust/20 p-2 text-xs text-rust">
           <span>Delete file?</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setConfirmingDelete(false)}
-              className="text-[#9ca3af] hover:text-white"
+              className="text-muted hover:text-text"
             >
               Cancel
             </button>
@@ -360,12 +360,12 @@ export default function FilesDrawer({
   }, [files, activeUploadFileIds, sortBy, searchQuery]);
 
   return (
-    <div className="flex h-full flex-col bg-[#13151b] text-[#d1d5db]">
+    <div className="flex h-full flex-col bg-card text-text">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1e212b] px-4 py-3.5">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold tracking-tight text-white">Files & Data</span>
-          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+          <span className="text-sm font-bold tracking-tight text-text">Files & Data</span>
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-dark">
             {files.length}
           </span>
         </div>
@@ -381,7 +381,7 @@ export default function FilesDrawer({
           <button
             onClick={onClose}
             aria-label="Close panel"
-            className="rounded-lg p-1 text-[#9ca3af] hover:bg-white/[0.08] hover:text-white"
+            className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
             title="Close drawer"
           >
             <PanelLeftClose className="size-4" />
@@ -390,19 +390,19 @@ export default function FilesDrawer({
       </div>
 
       {/* Search and Sort Toolbar */}
-      <div className="flex items-center gap-2 border-b border-[#1e212b] p-3">
+      <div className="flex items-center gap-2 border-b border-border/70 p-3">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6b7280]" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter files..."
-            className="w-full rounded-xl border border-[#262a38] bg-[#1a1d26] py-1.5 pl-7 pr-6 text-xs text-white placeholder-[#6b7280] outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+            className="w-full rounded-xl border border-border bg-bg/70 py-1.5 pl-7 pr-6 text-xs text-text placeholder-muted outline-none transition-colors focus:border-accent focus:bg-card focus:ring-1 focus:ring-accent"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#9ca3af] hover:text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-text"
             >
               <X className="size-3" />
             </button>
@@ -413,7 +413,7 @@ export default function FilesDrawer({
           aria-label="Sort files"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="rounded-xl border border-[#262a38] bg-[#1a1d26] px-2 py-1.5 text-xs text-[#9ca3af] outline-none hover:text-white focus:border-accent"
+          className="rounded-xl border border-border bg-bg/70 px-2 py-1.5 text-xs text-muted outline-none hover:text-text focus:border-accent"
         >
           {(Object.keys(SORT_LABEL) as SortOption[]).map((option) => (
             <option key={option} value={option}>
@@ -431,20 +431,20 @@ export default function FilesDrawer({
             {uploads.map((u) => (
               <div
                 key={u.id}
-                className="rounded-xl border border-accent/30 bg-accent/10 p-2 text-xs"
+                className="rounded-xl border border-accent/20 bg-accent-soft/20 p-2 text-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="truncate font-medium text-white">{u.file.name}</span>
+                  <span className="truncate font-medium text-text">{u.file.name}</span>
                   {u.status === "uploading" && (
                     <button
                       onClick={() => cancelUpload(u.id)}
-                      className="text-[10px] text-[#9ca3af] hover:text-rust"
+                      className="text-[10px] text-muted hover:text-rust"
                     >
                       Cancel
                     </button>
                   )}
                 </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#262a38]">
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-border">
                   <div
                     className="h-full bg-accent transition-all duration-300"
                     style={{ width: `${u.status === "done" ? 100 : u.progress}%` }}
@@ -456,13 +456,13 @@ export default function FilesDrawer({
         )}
 
         {visibleFiles.length === 0 && uploads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-4 py-12 text-center text-xs text-[#9ca3af]">
+          <div className="flex flex-col items-center justify-center px-4 py-12 text-center text-xs text-muted">
             {searchQuery ? (
               <p>No files matching &quot;{searchQuery}&quot;</p>
             ) : (
               <>
-                <p className="font-medium text-white">No files uploaded</p>
-                <p className="mt-1 text-[11px] text-[#6b7280]">
+                <p className="font-medium text-text">No files uploaded</p>
+                <p className="mt-1 text-[11px] text-muted">
                   Upload CSV spreadsheets, PDF tables, or text reports to analyze.
                 </p>
                 <button

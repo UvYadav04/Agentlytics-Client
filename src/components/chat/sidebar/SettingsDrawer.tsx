@@ -20,14 +20,14 @@ export default function SettingsDrawer({
   const [name, setName] = useState("");
 
   return (
-    <div className="flex h-full flex-col bg-[#13151b] text-[#d1d5db]">
+    <div className="flex h-full flex-col bg-card text-text">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#1e212b] px-4 py-3.5">
-        <span className="text-sm font-bold tracking-tight text-white">Settings & Workspaces</span>
+      <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
+        <span className="text-sm font-bold tracking-tight text-text">Settings & Workspaces</span>
         <button
           onClick={onClose}
           aria-label="Close panel"
-          className="rounded-lg p-1 text-[#9ca3af] hover:bg-white/[0.08] hover:text-white"
+          className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
           title="Close drawer"
         >
           <PanelLeftClose className="size-4" />
@@ -37,7 +37,7 @@ export default function SettingsDrawer({
       {/* Content */}
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
         <div>
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[#6b7280]">
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted">
             <span>SWITCH WORKSPACE</span>
             <span>{workspaces.length}</span>
           </div>
@@ -51,14 +51,16 @@ export default function SettingsDrawer({
                   onClick={() => onSelect(w.id)}
                   className={`flex w-full items-center justify-between rounded-xl p-2.5 text-left transition-all ${
                     isSelected
-                      ? "bg-[#1f2330] font-semibold text-white ring-1 ring-white/10"
-                      : "border border-[#252836] bg-[#191c25] text-[#d1d5db] hover:border-accent/40 hover:bg-[#1d212c] hover:text-white"
+                      ? "bg-accent-soft font-semibold text-accent-dark shadow-sm ring-1 ring-accent/25"
+                      : "border border-border bg-card text-text hover:border-accent/40 hover:bg-bg"
                   }`}
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                        isSelected ? "bg-accent text-white" : "bg-[#252836] text-[#9ca3af]"
+                        isSelected
+                          ? "bg-accent text-white"
+                          : "bg-border/60 text-muted"
                       }`}
                     >
                       {w.name.slice(0, 1).toUpperCase()}
@@ -73,10 +75,10 @@ export default function SettingsDrawer({
         </div>
 
         {/* Create workspace form */}
-        <div className="border-t border-[#1e212b] pt-3">
+        <div className="border-t border-border/70 pt-3">
           {creating ? (
             <form
-              className="flex flex-col gap-2 rounded-xl border border-accent/40 bg-[#191c25] p-3"
+              className="flex flex-col gap-2 rounded-xl border border-accent/40 bg-bg p-3"
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (!name.trim()) return;
@@ -90,13 +92,13 @@ export default function SettingsDrawer({
                 }
               }}
             >
-              <span className="text-xs font-semibold text-white">Create New Workspace</span>
+              <span className="text-xs font-semibold text-text">Create New Workspace</span>
               <input
                 autoFocus
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Workspace name..."
-                className="w-full rounded-lg border border-[#2b2f3e] bg-[#13151b] px-3 py-1.5 text-xs text-white outline-none focus:border-accent"
+                className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-text outline-none focus:border-accent"
               />
               <div className="flex items-center justify-end gap-1.5">
                 <button
@@ -105,7 +107,7 @@ export default function SettingsDrawer({
                     setCreating(false);
                     setName("");
                   }}
-                  className="rounded-lg px-2.5 py-1 text-xs text-[#9ca3af] hover:text-white"
+                  className="rounded-lg px-2.5 py-1 text-xs text-muted hover:text-text"
                 >
                   Cancel
                 </button>
@@ -121,7 +123,7 @@ export default function SettingsDrawer({
           ) : (
             <button
               onClick={() => setCreating(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#292d3c] py-2.5 text-xs font-semibold text-[#9ca3af] transition-colors hover:border-accent hover:bg-accent/10 hover:text-white"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2.5 text-xs font-semibold text-muted transition-colors hover:border-accent hover:bg-accent-soft/40 hover:text-accent-dark"
             >
               <Plus className="size-3.5" />
               <span>Create new workspace</span>
@@ -132,4 +134,3 @@ export default function SettingsDrawer({
     </div>
   );
 }
-

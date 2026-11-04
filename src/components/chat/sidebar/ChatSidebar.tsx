@@ -109,7 +109,7 @@ export default function ChatSidebar({
 
   return (
     <div className="flex h-full shrink-0">
-      {/* 1. Primary Datadog-style Navigation Sidepanel */}
+      {/* 1. Primary Navigation Sidepanel */}
       <SideNavPanel
         activeTab={activeTab}
         drawerOpen={drawerOpen}
@@ -123,7 +123,7 @@ export default function ChatSidebar({
 
       {/* 2. Secondary Sub-Drawer Panel */}
       <aside
-        className={`relative flex h-full flex-col border-r border-[#1e212b] bg-[#13151b] transition-all duration-200 ease-in-out ${
+        className={`relative flex h-full flex-col border-r border-border bg-card shadow-sm transition-all duration-200 ease-in-out ${
           drawerOpen ? "w-72 sm:w-80 opacity-100" : "w-0 opacity-0 overflow-hidden pointer-events-none"
         }`}
       >
@@ -183,7 +183,7 @@ export default function ChatSidebar({
             )}
           </div>
         ) : (
-          <div className="flex h-full w-72 sm:w-80 flex-col items-center justify-center p-4 text-center text-xs text-[#9ca3af]">
+          <div className="flex h-full w-72 sm:w-80 flex-col items-center justify-center p-4 text-center text-xs text-muted">
             <p>Please select or create a workspace to view content.</p>
           </div>
         )}
