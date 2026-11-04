@@ -17,6 +17,9 @@ import type {
   DatabaseType,
   FeedbackRating,
   FileItem,
+  FileTablePage,
+  FileTextChunk,
+  FileViewInfo,
   FileStatus,
   MessageFeedback,
   RememberOption,
@@ -255,6 +258,24 @@ export const api = createApi({
         { type: "File", id: arg.fileId },
         { type: "File", id: `LIST-${arg.workspaceId}` },
       ],
+    }),
+    getFileView: builder.query<FileViewInfo, string>({
+      query: (fileId) => `/files/${fileId}/view`,
+      keepUnusedDataFor: 0,
+    }),
+    getFileTablePage: builder.query<
+      FileTablePage,
+      { fileId: string; sheet?: string | null; offset: number; limit: number }
+    >({
+      query: ({ fileId, sheet, offset, limit }) => ({
+        url: `/files/${fileId}/view/table`,
+        params: { offset, limit, ...(sheet ? { sheet } : {}) },
+      }),
+      keepUnusedDataFor: 30,
+    }),
+    getFileTextChunk: builder.query<FileTextChunk, { fileId: string; offset: number }>({
+      query: ({ fileId, offset }) => ({ url: `/files/${fileId}/view/text`, params: { offset } }),
+      keepUnusedDataFor: 30,
     }),
     getFileDownloadUrl: builder.mutation<{ url: string }, string>({
       query: (fileId) => ({ url: `/files/${fileId}/download`, method: "GET" }),
@@ -604,6 +625,9 @@ export const {
   useGetActiveInvestigationQuery,
   useCancelInvestigationMutation,
   useRetryMessageMutation,
+  useGetFileViewQuery,
+  useGetFileTablePageQuery,
+  useLazyGetFileTextChunkQuery,
   useSetMessageFeedbackMutation,
   useGetChartQuery,
   useGetReportQuery,

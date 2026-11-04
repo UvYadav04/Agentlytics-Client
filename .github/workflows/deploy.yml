@@ -28,13 +28,13 @@ jobs:
       - name: Push Client Image
         run: docker compose push client
 
-      - name: Deploy to EC2
+      - name: Deploy to OVH Cloud
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.LIGHTSAIL_HOST }}
-          username: ubuntu
-          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          host: ${{ secrets.OVH_HOST || secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.OVH_USERNAME || 'ubuntu' }}
+          password: ${{ secrets.OVH_PASSWORD || secrets.LIGHTSAIL_SSH_KEY }}
           script: |
-            cd agentlytics/scripts
+            cd ~/agentlytics/scripts
             chmod +x deploy-client.sh
             ./deploy-client.sh

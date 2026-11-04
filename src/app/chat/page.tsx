@@ -26,6 +26,7 @@ import InputBar from "@/components/chat/InputBar";
 import ChatLanding from "@/components/chat/ChatLanding";
 import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
+import FileViewerProvider from "@/components/files/FileViewerProvider";
 
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
@@ -362,6 +363,7 @@ function ChatPageInner() {
   }
 
   return (
+    <FileViewerProvider>
     <div className="flex h-[calc(100vh-57px)] bg-bg">
       <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto p-3">
         <WorkspaceSwitcher selectedId={workspaceId} onSelect={selectWorkspace} />
@@ -472,5 +474,6 @@ function ChatPageInner() {
         />
       )}
     </div>
+    </FileViewerProvider>
   );
 }

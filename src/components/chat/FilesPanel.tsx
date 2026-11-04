@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, Download, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, Download, Eye, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import type { FileItem } from "@/lib/types";
 import {
   useDeleteFileMutation,
@@ -13,6 +13,7 @@ import {
 import { useFileUploads } from "@/hooks/use-file-uploads";
 import { replacementAccept, useFileReplace, type ReplaceState } from "@/hooks/use-file-replace";
 import MoreMenu, { type MoreMenuItem } from "@/components/ui/MoreMenu";
+import { useFileViewer } from "@/components/files/FileViewerProvider";
 import UploadModal from "./UploadModal";
 import SidebarSection from "./SidebarSection";
 
@@ -86,6 +87,7 @@ function FileRow({
   onAbortReplace: () => void;
   onDismissReplace: () => void;
 }) {
+  const { openFile } = useFileViewer();
   const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -177,7 +179,18 @@ function FileRow({
     }
   }
 
-  const menuItems: MoreMenuItem[] = [
+  const viewable = !replaceState && file.status !== "pending_upload" && file.status !== "cancelled";
+  const viewItem: MoreMenuItem = {
+    key: "view",
+    label: "View",
+    icon: Eye,
+    onSelect: () => openFile(file.id),
+    disabled: !viewable,
+  };
+
+  const menuItems: MoreMenuItem[] = file.dummy ? [viewItem] : [
+    viewItem,
+    "separator",
     { key: "rename", label: "Rename", icon: Pencil, onSelect: startRename, disabled: busy },
     {
       key: "replace",
@@ -260,9 +273,15 @@ function FileRow({
             <span className="shrink-0 text-[11px] text-muted">{splitName(file.filename).ext}</span>
           </form>
         ) : (
-          <span className="flex-1 truncate text-sm" title={file.dummy ? `${file.filename} (sample file)` : file.filename}>
+          <button
+            type="button"
+            onClick={() => viewable && openFile(file.id)}
+            disabled={!viewable}
+            title={viewable ? `View ${file.filename}` : file.filename}
+            className="min-w-0 flex-1 truncate text-left text-sm decoration-accent/50 underline-offset-2 enabled:hover:text-accent-dark enabled:hover:underline disabled:cursor-default"
+          >
             {file.filename}
-          </span>
+          </button>
         )}
         {!renaming && (
           <span className="flex shrink-0 items-center gap-1.5">
@@ -275,7 +294,7 @@ function FileRow({
               <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-accent-dark">Sample</span>
             )}
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${statusColor}`}>{statusLabel}</span>
-            {!file.dummy && <MoreMenu items={menuItems} label={`More options for ${file.filename}`} />}
+            <MoreMenu items={menuItems} label={`More options for ${file.filename}`} />
           </span>
         )}
       </div>

@@ -17,6 +17,7 @@ import ElapsedTimer from "./ElapsedTimer";
 import InvestigationTrail from "./InvestigationTrail";
 import MarkdownTable from "./MarkdownTable";
 import MessageActions from "./MessageActions";
+import { useFileViewer } from "@/components/files/FileViewerProvider";
 import type { Components } from "react-markdown";
 
 const MARKDOWN_COMPONENTS: Components = { table: MarkdownTable };
@@ -125,6 +126,7 @@ function DashboardLinks({ workspaceId, dashboardIds }: { workspaceId: string; da
 
 function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: string[] }) {
   const { data: files = [] } = useGetFilesQuery(workspaceId);
+  const { openFile } = useFileViewer();
   if (fileIds.length === 0) return null;
 
   return (
@@ -133,13 +135,23 @@ function FilesUsedRow({ workspaceId, fileIds }: { workspaceId: string; fileIds: 
       <span>Used:</span>
       {fileIds.map((id) => {
         const file = files.find((f) => f.id === id);
+        if (!file) {
+          return (
+            <span key={id} className="rounded-full border border-border bg-bg px-2 py-0.5 font-medium text-muted">
+              {id}
+            </span>
+          );
+        }
         return (
-          <span
+          <button
             key={id}
-            className="rounded-full border border-border bg-bg px-2 py-0.5 font-medium text-text"
+            type="button"
+            onClick={() => openFile(file.id)}
+            title={`View ${file.filename}`}
+            className="rounded-full border border-border bg-bg px-2 py-0.5 font-medium text-text transition-colors hover:border-accent hover:text-accent-dark"
           >
-            {file?.filename || id}
-          </span>
+            {file.filename}
+          </button>
         );
       })}
     </div>

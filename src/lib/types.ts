@@ -65,6 +65,38 @@ export type ChatMessage = {
   created_at: string;
 };
 
+export type FileViewKind = "table" | "pdf" | "text";
+
+export type FileViewInfo = {
+  id: string;
+  filename: string;
+  file_type: string;
+  kind: FileViewKind;
+  size_bytes: number | null;
+  url: string | null;
+  raw: boolean;
+  dummy: boolean;
+  sheets: { name: string; rows: number | null; columns: number | null }[];
+};
+
+export type FileTablePage = {
+  sheet: string | null;
+  columns: string[];
+  rows: string[][];
+  offset: number;
+  limit: number;
+  total_rows: number | null;
+  has_more: boolean;
+  truncated_columns: boolean;
+};
+
+export type FileTextChunk = {
+  text: string;
+  offset: number;
+  next_offset: number | null;
+  total_bytes: number;
+};
+
 export type RetryMode = "regenerate" | "think_harder" | "show_reasoning" | "more_detail" | "more_concise" | "simpler";
 
 export type FeedbackRating = "like" | "dislike";
