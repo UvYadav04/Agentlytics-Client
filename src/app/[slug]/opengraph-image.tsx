@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { SOLUTIONS, getSolution } from "@/content/solutions";
 import { renderOgImage } from "@/lib/ogImage";
 

@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { renderOgImage } from "@/lib/ogImage";
 
 export const alt = "Quarry - AI data analyzer for CSV, Excel, PDF, text files and databases";
