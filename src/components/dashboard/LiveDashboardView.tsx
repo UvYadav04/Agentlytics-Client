@@ -113,6 +113,8 @@ export default function LiveDashboardView({
   owner,
   sharedBy,
   validUpto,
+  isError,
+  error,
 }: {
   name: string;
   description: string | null;
@@ -130,6 +132,8 @@ export default function LiveDashboardView({
   owner?: OwnerControls;
   sharedBy?: { name: string; email: string };
   validUpto?: string;
+  isError?: boolean;
+  error?: unknown;
 }) {
   const tokens = CHART_TOKENS[theme.mode];
   const dataById = new Map((data?.charts ?? []).map((c) => [c.chart_id, c]));
@@ -282,6 +286,20 @@ export default function LiveDashboardView({
           </div>
         </div>
 
+        {isError && (
+          <div className="mb-5 flex items-start gap-2 rounded-card border border-rust/40 bg-rust/10 px-4 py-3 text-sm text-rust">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <div>
+              <p className="font-semibold">Unable to load live dashboard data</p>
+              <p className="mt-0.5 text-xs text-textSecondary">
+                {(error as { data?: { detail?: string } })?.data?.detail || "Could not retrieve live data for this dashboard."}
+              </p>
+              <button type="button" onClick={onRefresh} className="mt-2 text-xs font-semibold underline">
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
         {data && <StatusBanner data={data} owner={owner} sharedByName={sharedBy?.name} onRetry={onRefresh} />}
 
         {data?.generated_at && data.status === "ok" && (

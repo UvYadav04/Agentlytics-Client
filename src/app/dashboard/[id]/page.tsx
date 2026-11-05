@@ -90,7 +90,7 @@ function DataSourceRow({
 function LiveOwnerDashboard({ dashboard }: { dashboard: DashboardDetail }) {
   const [refreshInterval, setRefreshInterval] = useState(0);
   const [sharing, setSharing] = useState(false);
-  const { data, isFetching, refetch } = useGetDashboardDataQuery(dashboard.id, {
+  const { data, isFetching, isError, error, refetch } = useGetDashboardDataQuery(dashboard.id, {
     pollingInterval: refreshInterval || undefined,
     refetchOnMountOrArgChange: true,
   });
@@ -108,6 +108,8 @@ function LiveOwnerDashboard({ dashboard }: { dashboard: DashboardDetail }) {
         charts={dashboard.live_charts}
         data={data}
         isFetching={isFetching}
+        isError={isError}
+        error={error}
         onRefresh={() => refetch()}
         refreshInterval={refreshInterval}
         onRefreshIntervalChange={setRefreshInterval}

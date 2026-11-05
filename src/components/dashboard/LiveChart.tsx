@@ -334,7 +334,11 @@ export default function LiveChart({
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-rust" />
           <span>{data.error}</span>
         </div>
-      ) : !data || data.rows.length === 0 ? (
+      ) : !data ? (
+        <div className="flex h-[140px] items-center justify-center text-xs" style={{ color: tokens.textSecondary }}>
+          Unable to load data for this chart.
+        </div>
+      ) : data.rows.length === 0 ? (
         <div className="flex h-[140px] items-center justify-center text-xs" style={{ color: tokens.textSecondary }}>
           No data for this period.
         </div>

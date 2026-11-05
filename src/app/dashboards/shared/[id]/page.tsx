@@ -38,7 +38,7 @@ function Notice({ title, body }: { title: string; body: string }) {
 function SharedLive({ shared }: { shared: SharedDashboard }) {
   const [refreshInterval, setRefreshInterval] = useState(0);
   const [mode, setMode] = useState<DashboardTheme["mode"]>(shared.theme.mode);
-  const { data, isFetching, refetch } = useGetSharedDashboardDataQuery(shared.share_id, {
+  const { data, isFetching, isError, error, refetch } = useGetSharedDashboardDataQuery(shared.share_id, {
     pollingInterval: refreshInterval || undefined,
     refetchOnMountOrArgChange: true,
   });
@@ -53,6 +53,8 @@ function SharedLive({ shared }: { shared: SharedDashboard }) {
       charts={shared.live_charts}
       data={data}
       isFetching={isFetching}
+      isError={isError}
+      error={error}
       onRefresh={() => refetch()}
       refreshInterval={refreshInterval}
       onRefreshIntervalChange={setRefreshInterval}
