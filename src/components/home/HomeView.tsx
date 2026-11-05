@@ -370,7 +370,7 @@ export default function HomeView() {
               for CSV, Excel, PDF &amp; databases.
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-muted text-sm sm:text-base lg:mx-0">
-              Agentlytics is an AI data analyzer. Upload a spreadsheet, a
+              Quarry is an AI data analyzer. Upload a spreadsheet, a
               contract or a stack of PDFs - or connect PostgreSQL or MongoDB -
               ask in plain English, and get charts, reports and answers traced
               back to the exact file, row or page they came from.
@@ -739,7 +739,7 @@ export default function HomeView() {
               Why not just ask a chatbot?
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted">
-              Generic chatbots guess. Agentlytics investigates.
+              Generic chatbots guess. Quarry investigates.
             </p>
           </Reveal>
 
@@ -747,7 +747,7 @@ export default function HomeView() {
             <Reveal>
               <div className="h-full rounded-card border border-dashed border-border bg-bg p-7">
                 <h3 className="text-sm font-semibold text-muted">
-                  Without Agentlytics
+                  Without Quarry
                 </h3>
                 <ul className="mt-4 space-y-3">
                   {WITHOUT.map((item) => (
@@ -768,10 +768,10 @@ export default function HomeView() {
             <Reveal delay={120}>
               <div className="relative h-full overflow-hidden rounded-card border border-accent/30 bg-accent-soft/40 p-7 shadow-[0_0_50px_-15px_rgba(204,120,92,0.5)]">
                 <span className="absolute right-5 top-5 rounded-full bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                  Agentlytics
+                  Quarry
                 </span>
                 <h3 className="text-sm font-semibold text-accent-dark">
-                  With Agentlytics
+                  With Quarry
                 </h3>
                 <ul className="mt-4 space-y-3">
                   {WITH.map((item) => (

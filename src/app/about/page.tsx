@@ -303,7 +303,7 @@ export default function AboutPage() {
         <div className="relative mx-auto max-w-2xl">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted shadow-card">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            About Agentlytics - {STAGES.length} stages, one straight line
+            About Quarry - {STAGES.length} stages, one straight line
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
             How an answer actually{" "}
@@ -312,7 +312,7 @@ export default function AboutPage() {
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-muted text-lg">
-            Agentlytics is a workspace where you hand over messy files and get
+            Quarry is a workspace where you hand over messy files and get
             back verifiable answers - not a chatbot that free-associates
             numbers at you. Here's the full trip a file takes, from the
             moment it lands to the moment a claim carries a citation.

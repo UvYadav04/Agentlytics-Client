@@ -22,10 +22,10 @@ export function renderOgImage({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#F5F4EE",
+          background: "#F6F5EE",
           padding: "64px 72px",
           fontFamily: "sans-serif",
-          color: "#262624",
+          color: "#1E1E1C",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
@@ -34,7 +34,7 @@ export function renderOgImage({
               width: 56,
               height: 56,
               borderRadius: 14,
-              background: "linear-gradient(135deg, #CC785C 0%, #B0562B 100%)",
+              background: "linear-gradient(135deg, #C96442 0%, #B05536 100%)",
               display: "flex",
               alignItems: "flex-end",
               justifyContent: "center",
@@ -42,8 +42,8 @@ export function renderOgImage({
               padding: "0 0 12px",
             }}
           >
-            <div style={{ width: 7, height: 14, borderRadius: 2, background: "#F5F4EE" }} />
-            <div style={{ width: 7, height: 23, borderRadius: 2, background: "#F5F4EE" }} />
+            <div style={{ width: 7, height: 14, borderRadius: 2, background: "#F6F5EE" }} />
+            <div style={{ width: 7, height: 23, borderRadius: 2, background: "#F6F5EE" }} />
             <div style={{ width: 7, height: 31, borderRadius: 2, background: "rgba(245,244,238,0.92)" }} />
           </div>
           <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5 }}>{SITE_NAME}</div>
@@ -52,7 +52,7 @@ export function renderOgImage({
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 48 }}>
           <div style={{ display: "flex", flexDirection: "column", maxWidth: 760 }}>
             <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1.08, letterSpacing: -1.5 }}>{title}</div>
-            <div style={{ marginTop: 22, fontSize: 28, lineHeight: 1.35, color: "#83807A" }}>{subtitle}</div>
+            <div style={{ marginTop: 22, fontSize: 28, lineHeight: 1.35, color: "#7F7C75" }}>{subtitle}</div>
           </div>
           <div
             style={{
@@ -73,7 +73,7 @@ export function renderOgImage({
                   width: 26,
                   height: `${value * 1.7}px`,
                   borderRadius: 6,
-                  background: index === bars.length - 1 ? "#B35F45" : index % 2 ? "#D9A566" : "#CC785C",
+                  background: index === bars.length - 1 ? "#B35F45" : index % 2 ? "#D9A566" : "#C96442",
                 }}
               />
             ))}
@@ -92,7 +92,7 @@ export function renderOgImage({
                 borderRadius: 999,
                 background: "#FFFFFF",
                 border: "2px solid #E8E4D9",
-                color: "#262624",
+                color: "#1E1E1C",
               }}
             >
               {chip}

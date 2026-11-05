@@ -106,7 +106,7 @@ export default function GetStartedPage() {
         <Reveal className="relative mx-auto max-w-2xl">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-muted shadow-card">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            Getting started with Agentlytics
+            Getting started with Quarry
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
             Your workspace does more than answer.
@@ -243,7 +243,7 @@ export default function GetStartedPage() {
                 Dashboards that stay live
               </h2>
               <p className="mt-4 text-muted leading-relaxed">
-                Pin the charts you care about and Agentlytics keeps them
+                Pin the charts you care about and Quarry keeps them
                 current as your source files change - no re-asking the same
                 question every Monday morning. One link, always up to date.
               </p>

@@ -23,7 +23,7 @@ export default function SiteFooter() {
           <div>
             <Link href="/" className="flex items-center gap-2">
               <BrandMark />
-              <span className="font-semibold tracking-tight">Agentlytics</span>
+              <span className="font-semibold tracking-tight">Quarry</span>
             </Link>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted">
               AI data analyzer for CSV, Excel, PDF and text files and PostgreSQL and MongoDB databases - with
@@ -69,7 +69,7 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted sm:flex-row">
-          <span>&copy; {new Date().getFullYear()} Agentlytics</span>
+          <span>&copy; {new Date().getFullYear()} Quarry</span>
           <span>No answer without evidence traced to a real file.</span>
         </div>
       </div>

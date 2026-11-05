@@ -6,8 +6,8 @@
 }
 
 body {
-  background: #f5f4ee;
-  color: #262624;
+  background: #f6f5ee;
+  color: #1e1e1c;
 }
 
 ::-webkit-scrollbar {
@@ -15,7 +15,7 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #e8e4d9;
+  background: #e7e3d8;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-track {
@@ -45,15 +45,15 @@ body {
   margin: 0.15em 0;
 }
 .markdown code {
-  background: #f3e4dc;
-  color: #b35f45;
+  background: #f3e5de;
+  color: #b05536;
   padding: 0.1em 0.35em;
   border-radius: 4px;
   font-size: 0.9em;
 }
 .markdown pre {
-  background: #262624;
-  color: #f5f4ee;
+  background: #1e1e1c;
+  color: #f6f5ee;
   padding: 0.8em 1em;
   border-radius: 10px;
   overflow-x: auto;
@@ -74,7 +74,7 @@ body {
 }
 .markdown th,
 .markdown td {
-  border: 1px solid #e8e4d9;
+  border: 1px solid #e7e3d8;
   padding: 0.4em 0.6em;
   text-align: left;
 }

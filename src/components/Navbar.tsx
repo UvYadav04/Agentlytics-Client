@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
 import BrandMark from "@/components/marketing/BrandMark";
+import { SITE_NAME } from "@/lib/site";
 
 const HIDDEN_ON = ["/login", "/signup", "/forgot-password"];
 
@@ -20,7 +21,7 @@ export default function Navbar() {
       <div className="flex w-full items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <BrandMark />
-          <span className="font-semibold tracking-tight">Agentlytics</span>
+          <span className="font-semibold tracking-tight">{SITE_NAME}</span>
         </Link>
 
         <nav className="flex items-center gap-4">

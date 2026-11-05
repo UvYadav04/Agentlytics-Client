@@ -123,7 +123,7 @@ export default function SideNavPanel({
           {isExpanded && (
             <div className="flex min-w-0 flex-1 items-center justify-between pl-2">
               <span className="truncate text-xs font-bold tracking-tight text-text">
-                {currentWorkspace?.name ?? "Agentlytics"}
+                {currentWorkspace?.name ?? "Quarry"}
               </span>
               <button
                 onClick={onNewChat}

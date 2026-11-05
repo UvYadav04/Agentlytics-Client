@@ -22,7 +22,7 @@ export default function SolutionPage({ solution }: { solution: Solution }) {
       <JsonLd
         data={[
           softwareApplicationSchema({
-            name: `${solution.label} - Agentlytics`,
+            name: `${solution.label} - Quarry`,
             description: solution.metaDescription,
             url: absoluteUrl(path),
             featureList: solution.highlights.map((item) => item.title),

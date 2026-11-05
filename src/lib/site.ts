@@ -2,23 +2,23 @@ import type { Metadata } from "next";
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://agentlytics.duckdns.org").replace(/\/$/, "");
 
-export const SITE_NAME = "Agentlytics";
+export const SITE_NAME = "Quarry";
 
-export const SITE_TAGLINE = "AI Data Analyzer for CSV, Excel, PDF, Text Files & Databases";
+export const SITE_TAGLINE = "Autonomous AI Data Analyst for Documents, Tables & Databases";
 
 export const SITE_TITLE = `${SITE_NAME} - ${SITE_TAGLINE}`;
 
 export const SITE_DESCRIPTION =
-  "AI data analyzer for CSV, Excel, PDF and TXT files and PostgreSQL or MongoDB. Ask in plain English and get charts, reports and dashboards with cited answers.";
+  "Quarry is an autonomous AI data analyst that investigates your CSV, Excel, PDF documents, PostgreSQL, and MongoDB data in plain English. Get instant charts, reports, and cited dashboards.";
 
 export const SITE_KEYWORDS = [
-  "AI data analyzer",
-  "AI data analysis tool",
+  "Quarry AI",
   "AI data analyst",
-  "analyze data with AI",
-  "AI CSV analyzer",
+  "autonomous data analysis agent",
+  "AI data analysis tool",
   "chat with CSV",
-  "AI Excel analyzer",
+  "AI spreadsheet analyzer",
+  "chat with Excel",
   "analyze Excel with AI",
   "chat with PDF",
   "AI PDF analyzer",
@@ -29,11 +29,14 @@ export const SITE_KEYWORDS = [
   "AI dashboard generator",
   "AI chart generator",
   "AI report generator",
+  "multi-agent data analysis",
+  "autonomous business intelligence",
+  "enterprise AI data assistant",
 ];
 
-export const THEME_COLOR = "#CC785C";
+export const THEME_COLOR = "#C96442";
 
-export const BACKGROUND_COLOR = "#F5F4EE";
+export const BACKGROUND_COLOR = "#F6F5EE";
 
 export function absoluteUrl(path = "/"): string {
   if (!path || path === "/") return SITE_URL;

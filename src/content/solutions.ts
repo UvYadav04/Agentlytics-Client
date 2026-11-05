@@ -38,7 +38,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "teal",
     metaTitle: "AI CSV Analyzer - Chat with CSV Files in Plain English",
     metaDescription:
-      "Chat with CSV files in plain English. Agentlytics computes totals, trends and outliers with real code, builds charts and exports clean CSVs.",
+      "Chat with CSV files in plain English. Quarry computes totals, trends and outliers with real code, builds charts and exports clean CSVs.",
     keywords: [
       "AI CSV analyzer",
       "chat with CSV",
@@ -52,7 +52,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Chat with your CSV files.",
     headingAccent: "Get computed answers, not guesses.",
     intro:
-      "Agentlytics is an AI CSV analyzer that reads your export, understands the columns, and answers questions by running real computations over every row. Ask for totals, trends, anomalies or a chart in plain English - and see exactly which rows the answer came from.",
+      "Quarry is an AI CSV analyzer that reads your export, understands the columns, and answers questions by running real computations over every row. Ask for totals, trends, anomalies or a chart in plain English - and see exactly which rows the answer came from.",
     sampleFile: "orders-2026.csv",
     sampleQuestion: "Which product category grew fastest month over month?",
     sampleAnswer: "Home & Garden grew fastest, up 18.4% from August to September, driven by 312 more orders.",
@@ -138,7 +138,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "accent",
     metaTitle: "AI Excel Analyzer - Analyze Excel Spreadsheets with AI",
     metaDescription:
-      "Ask questions across every sheet of an Excel workbook. Agentlytics runs exact calculations, builds charts and reports, and cites the source sheet.",
+      "Ask questions across every sheet of an Excel workbook. Quarry runs exact calculations, builds charts and reports, and cites the source sheet.",
     keywords: [
       "AI Excel analyzer",
       "analyze Excel with AI",
@@ -152,7 +152,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Analyze Excel spreadsheets with AI.",
     headingAccent: "Every sheet, every row, no formulas.",
     intro:
-      "Agentlytics reads every sheet in your .xlsx workbook as its own table, so you can ask questions across tabs in plain English. The answers are calculated with real code over the full data and come back with charts, exports and a clear trail to the sheet they came from.",
+      "Quarry reads every sheet in your .xlsx workbook as its own table, so you can ask questions across tabs in plain English. The answers are calculated with real code over the full data and come back with charts, exports and a clear trail to the sheet they came from.",
     sampleFile: "regional-sales-q3.xlsx",
     sampleQuestion: "Which region missed its target by the most?",
     sampleAnswer: "West missed by 26%, closing at $412K against a $560K target. East and Central beat target.",
@@ -249,7 +249,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Chat with your PDFs.",
     headingAccent: "Answers cited to the exact page.",
     intro:
-      "Agentlytics is an AI PDF analyzer for long documents. It parses and indexes every page, so a question finds the paragraph that answers it - with a page citation you can check. Ask for a specific clause, summarize the whole document, or pull out the tables inside it and analyze them like a spreadsheet.",
+      "Quarry is an AI PDF analyzer for long documents. It parses and indexes every page, so a question finds the paragraph that answers it - with a page citation you can check. Ask for a specific clause, summarize the whole document, or pull out the tables inside it and analyze them like a spreadsheet.",
     sampleFile: "vendor-agreement.pdf",
     sampleQuestion: "What is the termination notice period?",
     sampleAnswer: "Either party may terminate the agreement with 60 days written notice (Section 8.2).",
@@ -301,7 +301,7 @@ export const SOLUTIONS: Solution[] = [
     ],
     faqs: [
       {
-        question: "How do I chat with a PDF in Agentlytics?",
+        question: "How do I chat with a PDF in Quarry?",
         answer:
           "Upload the PDF to a workspace and ask your question in plain English. The document is indexed page by page, and answers cite the page they came from.",
       },
@@ -333,7 +333,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "gold",
     metaTitle: "AI Text File Analyzer - Summarize and Question TXT Files",
     metaDescription:
-      "Upload TXT notes, transcripts or logs and ask questions in plain English. Agentlytics searches, summarizes and compares text with cited passages.",
+      "Upload TXT notes, transcripts or logs and ask questions in plain English. Quarry searches, summarizes and compares text with cited passages.",
     keywords: [
       "AI text file analyzer",
       "analyze TXT file with AI",
@@ -347,7 +347,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Turn plain text files into answers.",
     headingAccent: "Notes, transcripts and logs, searchable by meaning.",
     intro:
-      "Agentlytics indexes your .txt files so you can ask questions by meaning, not keyword. Summarize long transcripts, pull decisions out of meeting notes, or find every mention of an error in a log export - each answer linked to the passage it came from.",
+      "Quarry indexes your .txt files so you can ask questions by meaning, not keyword. Summarize long transcripts, pull decisions out of meeting notes, or find every mention of an error in a log export - each answer linked to the passage it came from.",
     sampleFile: "customer-interviews.txt",
     sampleQuestion: "What are the three most common complaints?",
     sampleAnswer: "Slow onboarding, unclear pricing tiers and missing export options came up most often across the interviews.",
@@ -425,7 +425,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "clay",
     metaTitle: "PostgreSQL AI Analyzer - Query Postgres in Plain English",
     metaDescription:
-      "Ask PostgreSQL questions in plain English. Agentlytics writes safe read-only SQL and builds live dashboards - without storing your table data.",
+      "Ask PostgreSQL questions in plain English. Quarry writes safe read-only SQL and builds live dashboards - without storing your table data.",
     keywords: [
       "PostgreSQL AI analyzer",
       "natural language to SQL",
@@ -439,7 +439,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Ask your PostgreSQL database anything.",
     headingAccent: "Plain English in, live dashboards out.",
     intro:
-      "Connect a PostgreSQL database with a read-only user and Agentlytics maps its schemas, tables and relationships. Ask a question in plain English and it writes validated, read-only SQL, runs it, and turns the result into live charts and dashboards that fetch fresh data every time they are opened.",
+      "Connect a PostgreSQL database with a read-only user and Quarry maps its schemas, tables and relationships. Ask a question in plain English and it writes validated, read-only SQL, runs it, and turns the result into live charts and dashboards that fetch fresh data every time they are opened.",
     sampleFile: "analytics (PostgreSQL)",
     sampleQuestion: "Daily signups over the last 30 days, split by plan",
     sampleAnswer: "Signups averaged 142 per day, with the Pro plan growing from 18% to 27% of new accounts.",
@@ -496,7 +496,7 @@ export const SOLUTIONS: Solution[] = [
           "Connect with a dedicated read-only user. Queries also run in a read-only transaction with a statement timeout and a row limit, and data-modifying statements are blocked before execution.",
       },
       {
-        question: "Does Agentlytics store my database data?",
+        question: "Does Quarry store my database data?",
         answer:
           "No. Only the generated queries and dashboard settings are saved. Data is fetched live when a dashboard is opened and is not cached on the server.",
       },
@@ -524,7 +524,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "teal",
     metaTitle: "MongoDB AI Analyzer - Query MongoDB with Natural Language",
     metaDescription:
-      "Query MongoDB or Atlas in plain English. Agentlytics builds safe aggregation pipelines and live dashboards without storing your documents.",
+      "Query MongoDB or Atlas in plain English. Quarry builds safe aggregation pipelines and live dashboards without storing your documents.",
     keywords: [
       "MongoDB AI analyzer",
       "MongoDB natural language query",
@@ -538,7 +538,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Query MongoDB in plain English.",
     headingAccent: "Aggregations and dashboards without writing pipelines.",
     intro:
-      "Connect MongoDB or MongoDB Atlas with a read-only user and Agentlytics samples your collections to learn their fields. Ask a question in plain English and it builds a validated aggregation pipeline, runs it live, and turns the result into charts and dashboards you can share.",
+      "Connect MongoDB or MongoDB Atlas with a read-only user and Quarry samples your collections to learn their fields. Ask a question in plain English and it builds a validated aggregation pipeline, runs it live, and turns the result into charts and dashboards you can share.",
     sampleFile: "shop (MongoDB Atlas)",
     sampleQuestion: "Orders per day by status for the last 14 days",
     sampleAnswer: "Delivered orders averaged 1,240 per day; cancellations spiked to 6.1% last Tuesday.",
@@ -599,7 +599,7 @@ export const SOLUTIONS: Solution[] = [
           "It is designed not to. Connect with a read-only user, and pipelines that write data or run server-side JavaScript are rejected before they reach your database.",
       },
       {
-        question: "Are my documents stored by Agentlytics?",
+        question: "Are my documents stored by Quarry?",
         answer: "No. Only the pipeline and chart settings are saved. Results are fetched live when you open a dashboard.",
       },
       {
@@ -617,7 +617,7 @@ export const SOLUTIONS: Solution[] = [
     tone: "rust",
     metaTitle: "AI Dashboard Generator - Live Charts from Plain English",
     metaDescription:
-      "Describe a dashboard and Agentlytics builds it from CSV, Excel, PostgreSQL or MongoDB. Live charts refresh on open and can be shared securely.",
+      "Describe a dashboard and Quarry builds it from CSV, Excel, PostgreSQL or MongoDB. Live charts refresh on open and can be shared securely.",
     keywords: [
       "AI dashboard generator",
       "AI chart generator",
@@ -631,7 +631,7 @@ export const SOLUTIONS: Solution[] = [
     heading: "Describe a dashboard.",
     headingAccent: "Get live charts from your data.",
     intro:
-      "Tell Agentlytics what you want to track and it builds the charts for you - from uploaded CSV and Excel files or straight from PostgreSQL and MongoDB. Dashboards keep the query, not a copy of your data, so they show fresh numbers every time they are opened and can be shared with your team.",
+      "Tell Quarry what you want to track and it builds the charts for you - from uploaded CSV and Excel files or straight from PostgreSQL and MongoDB. Dashboards keep the query, not a copy of your data, so they show fresh numbers every time they are opened and can be shared with your team.",
     sampleFile: "Revenue overview dashboard",
     sampleQuestion: "Build a dashboard of revenue, orders and top products for the last 30 days",
     sampleAnswer: "Created 4 charts: daily revenue, orders by status, top 10 products and average order value.",

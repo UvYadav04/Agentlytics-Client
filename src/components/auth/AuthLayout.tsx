@@ -113,7 +113,7 @@ export default function AuthLayout({
         <div className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center justify-center gap-2">
             <span className="inline-block h-6 w-6 rounded-md bg-accent" />
-            <span className="font-semibold tracking-tight">Agentlytics</span>
+            <span className="font-semibold tracking-tight">Quarry</span>
           </Link>
           <div className="w-full rounded-card border border-border bg-card p-8 shadow-card">
             {children}
@@ -130,7 +130,7 @@ export default function AuthLayout({
         <div className="glow-blob animate-float-b bottom-0 right-0 h-72 w-72 bg-plum opacity-20" />
 
         <Link href="/" className="relative z-10 text-5xl font-bold tracking-tight">
-          Agentlytics
+          Quarry
         </Link>
 
         <div className="relative z-10">
@@ -142,7 +142,7 @@ export default function AuthLayout({
         <div className="w-full max-w-md">
           <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden">
             <span className="inline-block h-6 w-6 rounded-md bg-accent" />
-            <span className="font-semibold tracking-tight">Agentlytics</span>
+            <span className="font-semibold tracking-tight">Quarry</span>
           </Link>
           <div className="w-full rounded-card border border-border bg-card p-8 shadow-card">
             {children}
