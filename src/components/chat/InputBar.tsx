@@ -131,6 +131,21 @@ export default function InputBar({
     }
   }
 
+  if (busy) {
+    return (
+      <div className="border-t border-border bg-card px-6 py-4 flex items-center justify-center">
+        <button
+          onClick={onStop}
+          type="button"
+          className="flex shrink-0 items-center gap-2 rounded-full bg-rust px-5 py-2 text-xs font-medium text-white shadow-sm transition-all hover:bg-rust/90 hover:shadow"
+        >
+          <span className="h-2 w-2 rounded-[2px] bg-white" />
+          Stop
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="border-t border-border bg-card px-6 py-4">
       {mentionedFiles.length > 0 && (
@@ -179,32 +194,19 @@ export default function InputBar({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder={answering ? "Type your answer..." : "Talk to your files... (@ to reference one)"}
+          placeholder="Talk to your files... (@ to reference one)"
           className="flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted"
         />
-        {busy && (
-          <button
-            onClick={onStop}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-rust px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-rust/90"
-          >
-            <span className="h-2 w-2 rounded-[2px] bg-white" />
-            Stop
-          </button>
-        )}
-        {(!busy || answering) && (
-          <button
-            onClick={submit}
-            disabled={disabled || !value.trim()}
-            className="shrink-0 rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark hover:shadow-[0_0_20px_-6px_rgba(204,120,92,0.7)] disabled:opacity-40 disabled:hover:shadow-none"
-          >
-            Send &#8594;
-          </button>
-        )}
+        <button
+          onClick={submit}
+          disabled={disabled || !value.trim()}
+          className="shrink-0 rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark hover:shadow-[0_0_20px_-6px_rgba(204,120,92,0.7)] disabled:opacity-40 disabled:hover:shadow-none"
+        >
+          Send &#8594;
+        </button>
       </div>
       <p className="mt-1.5 px-1 text-[11px] text-muted">
-        {answering
-          ? "Answering the question above \u00b7 Enter to send"
-          : "Enter to send \u00b7 Shift+Enter for a new line \u00b7 @ to reference a file"}
+        Enter to send &middot; Shift+Enter for a new line &middot; @ to reference a file
       </p>
     </div>
   );

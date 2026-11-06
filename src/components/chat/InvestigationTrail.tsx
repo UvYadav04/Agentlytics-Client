@@ -115,6 +115,7 @@ function QuestionCard({
   onAnswer?: (answer: string, questionId: string) => Promise<void> | void;
 }) {
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState("");
   const pending = row.status === "pending";
   const interactive = pending && canAnswer && !!onAnswer;
 
@@ -128,44 +129,89 @@ function QuestionCard({
     }
   }
 
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    const trimmed = inputValue.trim();
+    if (!trimmed || !onAnswer || submitting) return;
+    setSubmitting(trimmed);
+    try {
+      await onAnswer(trimmed, row.question.question_id);
+    } catch {
+      setSubmitting(null);
+    }
+  }
+
   return (
-    <li className="rounded-card border border-accent/30 bg-accent-soft/40 px-3 py-2.5">
+    <li className="rounded-card border border-accent/30 bg-accent-soft/40 px-3.5 py-3 space-y-2.5">
       <div className="flex items-start gap-2 text-sm text-text">
         <MessageCircleQuestion className="mt-0.5 size-4 shrink-0 text-accent-dark" />
-        <span className="whitespace-pre-line">{row.question.question}</span>
+        <span className="whitespace-pre-line font-medium">{row.question.question}</span>
       </div>
 
-      {interactive && row.question.options.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5 pl-6">
-          {row.question.options.map((option) => (
-            <button
-              key={option}
-              type="button"
+      {interactive && (
+        <div className="space-y-2 pl-6">
+          {/* Vertical Options */}
+          {row.question.options.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              {row.question.options.map((option, idx) => (
+                <button
+                  key={option}
+                  type="button"
+                  disabled={!!submitting}
+                  onClick={() => choose(option)}
+                  className={`group flex items-center justify-between rounded-lg border px-3 py-2 text-left text-xs font-medium transition-all disabled:cursor-not-allowed ${
+                    submitting === option
+                      ? "border-accent bg-accent-soft text-accent-dark"
+                      : "border-border/80 bg-bg text-text hover:border-accent hover:bg-card hover:text-accent-dark disabled:opacity-50"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent-dark group-hover:bg-accent group-hover:text-white transition-colors">
+                      {idx + 1}
+                    </span>
+                    <span>{option}</span>
+                  </span>
+                  {submitting === option && (
+                    <Loader2 className="size-3 animate-spin text-accent-dark shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Inline Input Box inside the question card */}
+          <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               disabled={!!submitting}
-              onClick={() => choose(option)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
-                submitting === option
-                  ? "border-accent bg-accent-soft text-accent-dark"
-                  : "border-border bg-bg text-text hover:border-accent hover:bg-accent-soft/50 hover:text-accent-dark disabled:opacity-50"
-              }`}
+              placeholder={
+                row.question.options.length > 0
+                  ? "Or type your answer..."
+                  : "Type your answer..."
+              }
+              className="flex-1 rounded-lg border border-border bg-bg px-3 py-1.5 text-xs text-text outline-none transition-colors placeholder:text-muted focus:border-accent focus:bg-card disabled:opacity-50"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={!inputValue.trim() || !!submitting}
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark disabled:opacity-40"
             >
-              {option}
+              {submitting && submitting === inputValue.trim() ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                "Send"
+              )}
             </button>
-          ))}
+          </form>
         </div>
       )}
 
-      {interactive && (
-        <p className="mt-2 pl-6 text-[11px] text-muted">
-          {row.question.options.length > 0
-            ? "Pick an option or type your own answer below."
-            : "Type your answer below."}
-        </p>
-      )}
-
       {row.status === "answered" && (
-        <p className="mt-1.5 flex items-center gap-1 pl-6 text-xs text-muted">
-          <Check className="size-3 shrink-0 text-accent-dark" />
+        <p className="flex items-center gap-1.5 pl-6 text-xs text-muted">
+          <Check className="size-3.5 shrink-0 text-accent-dark" />
           <span>
             You answered: <span className="font-medium text-text">{row.answer}</span>
           </span>
@@ -173,7 +219,7 @@ function QuestionCard({
       )}
 
       {row.status === "expired" && (
-        <p className="mt-1.5 pl-6 text-xs text-muted">
+        <p className="pl-6 text-xs text-muted">
           No answer received - continued with the most reasonable assumption.
         </p>
       )}

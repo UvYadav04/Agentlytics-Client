@@ -437,8 +437,7 @@ function ChatPageInner() {
             <InputBar
               workspaceId={workspaceId ?? ""}
               disabled={!chatId}
-              busy={!!liveInvestigationId}
-              answering={!!pendingQuestion && !!liveInvestigationId && !sending}
+              busy={!!liveInvestigationId || sending}
               onSend={handleSend}
               onStop={handleStop}
             />
