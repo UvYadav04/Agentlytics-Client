@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Share2 } from "lucide-react";
+import { BarChart3, ExternalLink, Share2 } from "lucide-react";
 import {
   useGetDashboardDataQuery,
   useGetDashboardQuery,
@@ -218,22 +219,57 @@ export default function DashboardDetailPage() {
       )}
 
       {dashboard.charts.length === 0 ? (
-        <p className="text-muted text-sm">This dashboard has no charts yet.</p>
+        <div className="rounded-card border border-border bg-card p-8 text-center text-sm text-muted shadow-card">
+          This dashboard has no charts yet.
+        </div>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2">
-          {dashboard.charts.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-card border border-border bg-card p-4 shadow-card"
-            >
-              <h2 className="text-sm font-medium mb-2 truncate">{c.title}</h2>
-              <AutoHeightIframe
-                src={c.url}
-                title={c.title}
-                className="w-full rounded-lg border border-border"
-              />
-            </div>
-          ))}
+        <div
+          className={`grid gap-6 ${
+            dashboard.charts.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+          }`}
+        >
+          {dashboard.charts.map((c, index) => {
+            const isSingle = dashboard.charts.length === 1;
+            const spansFull =
+              isSingle ||
+              (dashboard.charts.length > 1 &&
+                dashboard.charts.length % 2 === 1 &&
+                index === dashboard.charts.length - 1);
+            return (
+              <div
+                key={c.id}
+                className={`group rounded-card border border-border bg-card p-5 shadow-card transition-all hover:border-accent/40 hover:shadow-md ${
+                  spansFull && !isSingle ? "md:col-span-2" : ""
+                }`}
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent-dark">
+                      <BarChart3 className="size-4" />
+                    </div>
+                    <h2 className="text-sm font-semibold truncate" title={c.title}>
+                      {c.title}
+                    </h2>
+                  </div>
+                  <Link
+                    href={`/chart/${c.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:border-accent hover:text-accent-dark"
+                    title="Open chart in new tab"
+                  >
+                    <span>Expand</span>
+                    <ExternalLink className="size-3" />
+                  </Link>
+                </div>
+                <AutoHeightIframe
+                  src={c.url}
+                  title={c.title}
+                  className="w-full rounded-lg border border-border"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
       {sharing && (

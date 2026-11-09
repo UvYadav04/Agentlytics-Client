@@ -310,13 +310,28 @@ export default function LiveDashboardView({
         )}
 
         {charts.length === 0 ? (
-          <p className="text-sm" style={{ color: tokens.textSecondary }}>
-            This dashboard has no charts.
-          </p>
+          <div
+            className="rounded-card border p-8 text-center"
+            style={{ background: tokens.surface, borderColor: tokens.border }}
+          >
+            <p className="text-sm" style={{ color: tokens.textSecondary }}>
+              This dashboard has no charts.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {metrics.length > 0 && (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                className={`grid gap-5 ${
+                  metrics.length === 1
+                    ? "grid-cols-1"
+                    : metrics.length === 2
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : metrics.length === 3
+                    ? "grid-cols-1 sm:grid-cols-3"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                }`}
+              >
                 {metrics.map((chart) => (
                   <LiveChart
                     key={chart.chart_id}
@@ -324,21 +339,37 @@ export default function LiveDashboardView({
                     data={dataFor(chart.chart_id)}
                     theme={theme}
                     loading={!data || isFetching}
+                    isSingle={metrics.length === 1 && others.length === 0}
                   />
                 ))}
               </div>
             )}
             {others.length > 0 && (
-              <div className="grid gap-5 lg:grid-cols-2">
-                {others.map((chart) => (
-                  <LiveChart
-                    key={chart.chart_id}
-                    config={chart}
-                    data={dataFor(chart.chart_id)}
-                    theme={theme}
-                    loading={!data || isFetching}
-                  />
-                ))}
+              <div
+                className={`grid gap-6 ${
+                  others.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"
+                }`}
+              >
+                {others.map((chart, index) => {
+                  const isSingle = others.length === 1;
+                  const spansFull =
+                    isSingle ||
+                    (others.length > 1 && others.length % 2 === 1 && index === others.length - 1);
+                  return (
+                    <div
+                      key={chart.chart_id}
+                      className={spansFull && !isSingle ? "lg:col-span-2" : ""}
+                    >
+                      <LiveChart
+                        config={chart}
+                        data={dataFor(chart.chart_id)}
+                        theme={theme}
+                        loading={!data || isFetching}
+                        isSingle={spansFull}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

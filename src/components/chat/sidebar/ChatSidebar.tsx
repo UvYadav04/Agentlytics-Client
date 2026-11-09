@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { DatabaseConnection, Workspace } from "@/lib/types";
 import {
   useGetChatsQuery,
@@ -45,14 +45,6 @@ export default function ChatSidebar({
   onNewChat: () => void;
   onConnectDatabase: (reconnectTarget?: DatabaseConnection | null) => void;
 }) {
-  // Navigation expand/collapse state (hamburger ≡ toggle)
-  const [navExpanded, setNavExpanded] = useState(true);
-
-  const currentWorkspace = useMemo(
-    () => workspaces.find((w) => w.id === workspaceId),
-    [workspaces, workspaceId]
-  );
-
   // Queries to power live counts on items
   const { data: chats = [] } = useGetChatsQuery(workspaceId ?? "", { skip: !workspaceId });
   const { data: files = [] } = useGetFilesQuery(workspaceId ?? "", { skip: !workspaceId });
@@ -109,14 +101,13 @@ export default function ChatSidebar({
 
   return (
     <div className="flex h-full shrink-0">
-      {/* 1. Primary Navigation Sidepanel */}
+      {/* 1. Primary Navigation Sidepanel (Compressed / Icons Only) */}
       <SideNavPanel
         activeTab={activeTab}
         drawerOpen={drawerOpen}
-        isExpanded={navExpanded}
+        chatId={chatId}
         counts={counts}
-        currentWorkspace={currentWorkspace}
-        onToggleExpand={() => setNavExpanded((v) => !v)}
+        onToggleDrawer={onToggleDrawer}
         onSelectTab={handleSelectTab}
         onNewChat={onNewChat}
       />
