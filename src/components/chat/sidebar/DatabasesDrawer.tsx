@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Database, Leaf, PanelLeftClose, Plus, RefreshCw } from "lucide-react";
+import { Database, Leaf, Plus, RefreshCw } from "lucide-react";
 import { useGetDatabasesQuery } from "@/lib/api/apiSlice";
 import type { DatabaseConnection } from "@/lib/types";
 import DatabaseDetailsModal from "@/components/database/DatabaseDetailsModal";
@@ -26,7 +26,7 @@ export default function DatabasesDrawer({
 }: {
   workspaceId: string;
   onConnect: (reconnectTarget?: DatabaseConnection) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { data: connections = [] } = useGetDatabasesQuery(workspaceId);
   const [selected, setSelected] = useState<DatabaseConnection | null>(null);
@@ -49,14 +49,6 @@ export default function DatabasesDrawer({
           >
             <Plus className="size-3.5" />
             <span>Add DB</span>
-          </button>
-          <button
-            onClick={onClose}
-            aria-label="Close panel"
-            className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-            title="Close drawer"
-          >
-            <PanelLeftClose className="size-4" />
           </button>
         </div>
       </div>

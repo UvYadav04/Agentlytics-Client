@@ -7,6 +7,7 @@ import type { Chat } from "@/lib/types";
 export default function ChatLanding({
   chats,
   submitting,
+  hasConnectedDatabase = false,
   onStartChat,
   onSelectChat,
   onNewChat,
@@ -14,6 +15,7 @@ export default function ChatLanding({
 }: {
   chats: Chat[];
   submitting: boolean;
+  hasConnectedDatabase?: boolean;
   onStartChat: (content: string) => void;
   onSelectChat: (id: string) => void;
   onNewChat: () => void;
@@ -63,16 +65,18 @@ export default function ChatLanding({
         <p className="mt-1.5 px-1 text-[11px] text-muted">
           Enter to send &middot; Shift+Enter for a new line
         </p>
-        <div className="mt-5 flex justify-center">
-          <button
-            type="button"
-            onClick={onConnectDatabase}
-            className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-text shadow-card transition-all hover:border-accent hover:text-accent-dark"
-          >
-            <Database className="size-4" />
-            Connect a database
-          </button>
-        </div>
+        {!hasConnectedDatabase && (
+          <div className="mt-5 flex justify-center">
+            <button
+              type="button"
+              onClick={onConnectDatabase}
+              className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-text shadow-card transition-all hover:border-accent hover:text-accent-dark"
+            >
+              <Database className="size-4" />
+              Connect a database
+            </button>
+          </div>
+        )}
       </div>
 
 

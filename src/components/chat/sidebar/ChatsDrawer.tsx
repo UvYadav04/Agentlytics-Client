@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MessageSquarePlus, PanelLeftClose, Pencil, Search, Trash2, X } from "lucide-react";
+import { MessageSquarePlus, Pencil, Search, Trash2, X } from "lucide-react";
 import {
   useCreateChatMutation,
   useDeleteChatMutation,
@@ -23,7 +23,7 @@ export default function ChatsDrawer({
   workspaceId: string;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { data: chats = [] } = useGetChatsQuery(workspaceId);
   const [createChat, { isLoading: creating }] = useCreateChatMutation();
@@ -105,14 +105,6 @@ export default function ChatsDrawer({
           >
             <MessageSquarePlus className="size-3.5" />
             <span>New</span>
-          </button>
-          <button
-            onClick={onClose}
-            aria-label="Close panel"
-            className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-            title="Close drawer"
-          >
-            <PanelLeftClose className="size-4" />
           </button>
         </div>
       </div>

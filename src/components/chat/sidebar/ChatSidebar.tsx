@@ -62,14 +62,11 @@ export default function ChatSidebar({
     reports: reports.length,
   };
 
-  // Keyboard shortcuts: Ctrl+B / Cmd+B for toggle drawer, Ctrl+N / Cmd+N for new chat
+  // Keyboard shortcuts: Ctrl+N / Cmd+N for new chat
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
-      if (isCmdOrCtrl && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        onToggleDrawer();
-      } else if (isCmdOrCtrl && e.key.toLowerCase() === "n") {
+      if (isCmdOrCtrl && e.key.toLowerCase() === "n") {
         e.preventDefault();
         onNewChat();
       }
@@ -77,26 +74,14 @@ export default function ChatSidebar({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onToggleDrawer, onNewChat]);
+  }, [onNewChat]);
 
   function handleSelectTab(tab: SidebarTab) {
     if (tab === "home") {
       onSelectChat(null);
-      if (drawerOpen) {
-        onToggleDrawer();
-      }
       return;
     }
-
-    if (activeTab === tab) {
-      // Clicking the already-active tab toggles the drawer
-      onToggleDrawer();
-    } else {
-      onTabChange(tab);
-      if (!drawerOpen) {
-        onToggleDrawer();
-      }
-    }
+    onTabChange(tab);
   }
 
   return (
@@ -104,20 +89,16 @@ export default function ChatSidebar({
       {/* 1. Primary Navigation Sidepanel (Compressed / Icons Only) */}
       <SideNavPanel
         activeTab={activeTab}
-        drawerOpen={drawerOpen}
+        drawerOpen={true}
         chatId={chatId}
         counts={counts}
-        onToggleDrawer={onToggleDrawer}
+        onToggleDrawer={() => {}}
         onSelectTab={handleSelectTab}
         onNewChat={onNewChat}
       />
 
-      {/* 2. Secondary Sub-Drawer Panel */}
-      <aside
-        className={`relative flex h-full flex-col border-r border-border bg-card shadow-sm transition-all duration-200 ease-in-out ${
-          drawerOpen ? "w-72 sm:w-80 opacity-100" : "w-0 opacity-0 overflow-hidden pointer-events-none"
-        }`}
-      >
+      {/* 2. Secondary Sub-Drawer Panel (Non-collapsible) */}
+      <aside className="relative flex h-full w-72 sm:w-80 shrink-0 flex-col border-r border-border bg-card shadow-sm">
         {workspaceId ? (
           <div className="flex h-full w-72 sm:w-80 flex-col">
             {activeTab === "chats" && (
@@ -125,21 +106,18 @@ export default function ChatSidebar({
                 workspaceId={workspaceId}
                 selectedId={chatId}
                 onSelect={(id) => onSelectChat(id)}
-                onClose={onToggleDrawer}
               />
             )}
 
             {activeTab === "dashboards" && (
               <DashboardsDrawer
                 workspaceId={workspaceId}
-                onClose={onToggleDrawer}
               />
             )}
 
             {activeTab === "files" && (
               <FilesDrawer
                 workspaceId={workspaceId}
-                onClose={onToggleDrawer}
               />
             )}
 
@@ -147,21 +125,18 @@ export default function ChatSidebar({
               <DatabasesDrawer
                 workspaceId={workspaceId}
                 onConnect={onConnectDatabase}
-                onClose={onToggleDrawer}
               />
             )}
 
             {activeTab === "metrics" && (
               <MetricsDrawer
                 workspaceId={workspaceId}
-                onClose={onToggleDrawer}
               />
             )}
 
             {activeTab === "reports" && (
               <ReportsDrawer
                 workspaceId={workspaceId}
-                onClose={onToggleDrawer}
               />
             )}
 
@@ -169,7 +144,6 @@ export default function ChatSidebar({
               <SettingsDrawer
                 selectedId={workspaceId}
                 onSelect={onSelectWorkspace}
-                onClose={onToggleDrawer}
               />
             )}
           </div>

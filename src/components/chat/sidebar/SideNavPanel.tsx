@@ -9,13 +9,13 @@ import {
   Home,
   LayoutDashboard,
   LineChart,
-  Menu,
   MessageSquare,
   Plus,
   Settings,
 } from "lucide-react";
 import type { SidebarCounts, SidebarTab } from "./types";
 import { useGetMeQuery } from "@/lib/api/apiSlice";
+import BrandMark from "@/components/marketing/BrandMark";
 
 interface NavItem {
   id: SidebarTab;
@@ -72,13 +72,13 @@ export default function SideNavPanel({
       },
       {
         id: "metrics",
-        label: "Metrics",
+        label: "Charts",
         icon: LineChart,
         count: counts.metrics,
       },
       {
         id: "reports",
-        label: "Reports & Logs",
+        label: "Reports",
         icon: FileText,
         count: counts.reports,
       },
@@ -89,21 +89,15 @@ export default function SideNavPanel({
   return (
     <aside className="relative flex h-full w-16 shrink-0 flex-col items-center justify-between border-r border-border bg-card px-2 py-3 text-text select-none z-20">
       {/* Top Section */}
-      <div className="flex w-full flex-col items-center gap-2.5">
-        {/* Toggle drawer button */}
-        <div className="group relative flex items-center justify-center">
-          <button
-            onClick={onToggleDrawer}
-            aria-label="Toggle drawer"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted transition-colors hover:bg-bg hover:text-text"
-          >
-            <Menu className="size-5" />
-          </button>
-          <div className="pointer-events-none absolute left-full ml-3 hidden whitespace-nowrap rounded-lg bg-text px-2.5 py-1 text-xs font-medium text-white shadow-lg group-hover:flex z-50 items-center gap-1.5">
-            <span>Toggle panel</span>
-            <span className="rounded bg-white/20 px-1 py-0.5 text-[9px] text-white">Ctrl+B</span>
-          </div>
-        </div>
+      <div className="flex w-full flex-col items-center gap-3">
+        {/* Brand Logo */}
+        <Link
+          href="/"
+          title="Quarry Data Analyzer"
+          className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform hover:scale-105"
+        >
+          <BrandMark className="h-7 w-7" />
+        </Link>
 
         {/* Quick New Chat Button */}
         <div className="group relative flex items-center justify-center">
@@ -129,7 +123,7 @@ export default function SideNavPanel({
             const isActive =
               item.id === "home"
                 ? !chatId
-                : activeTab === item.id && drawerOpen;
+                : activeTab === item.id;
 
             return (
               <div key={item.id} className="group relative flex w-full justify-center">
@@ -187,14 +181,14 @@ export default function SideNavPanel({
             onClick={() => onSelectTab("settings")}
             aria-label="Settings"
             className={`flex h-11 w-full items-center justify-center rounded-xl transition-all ${
-              activeTab === "settings" && drawerOpen
+              activeTab === "settings"
                 ? "bg-accent-soft font-semibold text-accent-dark ring-1 ring-accent/25"
                 : "text-muted hover:bg-bg hover:text-text"
             }`}
           >
             <Settings
               className={`size-5 shrink-0 ${
-                activeTab === "settings" && drawerOpen
+                activeTab === "settings"
                   ? "text-accent-dark"
                   : "text-muted group-hover:text-text"
               }`}

@@ -127,23 +127,10 @@ export default function InputBar({
     }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      submit();
+      if (!busy || answering) {
+        submit();
+      }
     }
-  }
-
-  if (busy) {
-    return (
-      <div className="border-t border-border bg-card px-6 py-4 flex items-center justify-center">
-        <button
-          onClick={onStop}
-          type="button"
-          className="flex shrink-0 items-center gap-2 rounded-full bg-rust px-5 py-2 text-xs font-medium text-white shadow-sm transition-all hover:bg-rust/90 hover:shadow"
-        >
-          <span className="h-2 w-2 rounded-[2px] bg-white" />
-          Stop
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -194,20 +181,47 @@ export default function InputBar({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Talk to your files... (@ to reference one)"
+          placeholder={
+            busy && !answering
+              ? "Investigation in progress... (type your next query here)"
+              : "Talk to your files... (@ to reference one)"
+          }
           className="flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted"
         />
+        {busy && !answering && (
+          <button
+            onClick={onStop}
+            type="button"
+            title="Stop current investigation"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-rust/40 bg-rust/10 px-3 py-1.5 text-xs font-medium text-rust transition-all hover:bg-rust hover:text-white active:scale-95"
+          >
+            <span className="h-2 w-2 rounded-[2px] bg-current" />
+            Stop
+          </button>
+        )}
         <button
           onClick={submit}
-          disabled={disabled || !value.trim()}
+          disabled={disabled || !value.trim() || (busy && !answering)}
+          title={
+            busy && !answering
+              ? "Investigation in progress. You can type another query, but sending is disabled until it finishes."
+              : "Send"
+          }
           className="shrink-0 rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-all hover:bg-accent-dark hover:shadow-[0_0_20px_-6px_rgba(204,120,92,0.7)] disabled:opacity-40 disabled:hover:shadow-none"
         >
-          Send &#8594;
+          {busy && !answering ? "Investigating..." : <>Send &#8594;</>}
         </button>
       </div>
-      <p className="mt-1.5 px-1 text-[11px] text-muted">
-        Enter to send &middot; Shift+Enter for a new line &middot; @ to reference a file
-      </p>
+      {busy && !answering ? (
+        <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[11px] font-medium text-accent-dark">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+          Investigation in progress. You can type another query, but sending is paused until the current investigation completes.
+        </p>
+      ) : (
+        <p className="mt-1.5 px-1 text-[11px] text-muted">
+          Enter to send &middot; Shift+Enter for a new line &middot; @ to reference a file
+        </p>
+      )}
     </div>
   );
 }

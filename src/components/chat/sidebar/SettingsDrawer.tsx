@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, PanelLeftClose, Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useCreateWorkspaceMutation, useGetWorkspacesQuery } from "@/lib/api/apiSlice";
 import type { Workspace } from "@/lib/types";
 
@@ -12,7 +12,7 @@ export default function SettingsDrawer({
 }: {
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { data: workspaces = [] } = useGetWorkspacesQuery();
   const [createWorkspace, { isLoading: creatingWorkspace }] = useCreateWorkspaceMutation();
@@ -24,14 +24,6 @@ export default function SettingsDrawer({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
         <span className="text-sm font-bold tracking-tight text-text">Settings & Workspaces</span>
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-          title="Close drawer"
-        >
-          <PanelLeftClose className="size-4" />
-        </button>
       </div>
 
       {/* Content */}

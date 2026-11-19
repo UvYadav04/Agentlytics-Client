@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileSpreadsheet, FileText, PanelLeftClose } from "lucide-react";
+import { FileSpreadsheet, FileText } from "lucide-react";
 import { useGetWorkspaceReportsQuery } from "@/lib/api/apiSlice";
 
 export default function ReportsDrawer({
@@ -9,7 +9,7 @@ export default function ReportsDrawer({
   onClose,
 }: {
   workspaceId: string;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { data: allReports = [] } = useGetWorkspaceReportsQuery(workspaceId);
   const reports = allReports.filter((r) => r.format !== "csv");
@@ -20,19 +20,11 @@ export default function ReportsDrawer({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold tracking-tight text-text">Reports & Logs</span>
+          <span className="text-sm font-bold tracking-tight text-text">Reports</span>
           <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-dark">
             {allReports.length}
           </span>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-          title="Close drawer"
-        >
-          <PanelLeftClose className="size-4" />
-        </button>
       </div>
 
       {/* Content */}

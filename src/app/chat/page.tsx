@@ -7,6 +7,7 @@ import {
   useCancelInvestigationMutation,
   useCreateChatMutation,
   useGetChatsQuery,
+  useGetDatabasesQuery,
   useGetMeQuery,
   useGetMessagesQuery,
   useGetWorkspacesQuery,
@@ -25,7 +26,6 @@ import ChatLanding from "@/components/chat/ChatLanding";
 import EmptyChatComposer from "@/components/chat/EmptyChatComposer";
 import DashboardPanel, { type RightSection } from "@/components/chat/DashboardPanel";
 import FileViewerProvider from "@/components/files/FileViewerProvider";
-import { PanelLeftOpen } from "lucide-react";
 
 function extractErrorMessage(err: unknown, fallback: string): string {
   const data = (err as { data?: unknown } | undefined)?.data as { detail?: string } | undefined;
@@ -63,7 +63,6 @@ function ChatPageInner() {
   const retryingMessageRef = useRef<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<SidebarTab>("chats");
-  const [drawerOpen, setDrawerOpen] = useState(true);
   const [connectDatabase, setConnectDatabase] = useState<{ reconnectTarget: DatabaseConnection | null } | null>(
     () => (searchParams.get("connect") === "database" ? { reconnectTarget: null } : null)
   );
@@ -90,6 +89,8 @@ function ChatPageInner() {
 
 
   const { data: chats = [] } = useGetChatsQuery(workspaceId ?? "", { skip: !workspaceId });
+  const { data: databases = [] } = useGetDatabasesQuery(workspaceId ?? "", { skip: !workspaceId });
+  const hasConnectedDatabase = databases.some((d) => d.status === "connected") || databases.length > 0;
   const activeChatTitle = chats.find((c) => c.id === chatId)?.title;
 
   const { data: chatMessages = [], isLoading: messagesLoading } = useGetMessagesQuery(
@@ -370,9 +371,9 @@ function ChatPageInner() {
         workspaces={workspaces}
         chatId={chatId}
         activeTab={activeTab}
-        drawerOpen={drawerOpen}
+        drawerOpen={true}
         onTabChange={setActiveTab}
-        onToggleDrawer={() => setDrawerOpen((prev) => !prev)}
+        onToggleDrawer={() => {}}
         onSelectWorkspace={selectWorkspace}
         onSelectChat={selectChat}
         onNewChat={handleNewChat}
@@ -386,15 +387,6 @@ function ChatPageInner() {
         {chatId && (
           <div className="flex h-11 shrink-0 items-center justify-between border-b border-border bg-card/40 px-4 backdrop-blur-sm">
             <div className="flex items-center gap-2.5 min-w-0">
-              {!drawerOpen && (
-                <button
-                  onClick={() => setDrawerOpen(true)}
-                  title="Open sidebar (Ctrl+B)"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-bg hover:text-text"
-                >
-                  <PanelLeftOpen className="size-4" />
-                </button>
-              )}
               <span className="truncate text-xs font-semibold text-text">
                 {activeChatTitle || "Chat Conversation"}
               </span>
@@ -446,6 +438,7 @@ function ChatPageInner() {
           <ChatLanding
             chats={chats}
             submitting={startingChat}
+            hasConnectedDatabase={hasConnectedDatabase}
             onStartChat={handleStartChat}
             onSelectChat={selectChat}
             onNewChat={handleNewChat}
@@ -470,7 +463,6 @@ function ChatPageInner() {
           onClose={() => setConnectDatabase(null)}
           onConnected={() => {
             setActiveTab("databases");
-            setDrawerOpen(true);
           }}
         />
       )}

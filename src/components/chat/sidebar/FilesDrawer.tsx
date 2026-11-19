@@ -6,7 +6,6 @@ import {
   Eye,
   FileSpreadsheet,
   FileText,
-  PanelLeftClose,
   Pencil,
   Plus,
   RefreshCw,
@@ -330,7 +329,7 @@ export default function FilesDrawer({
   onClose,
 }: {
   workspaceId: string;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const [showUpload, setShowUpload] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -377,14 +376,6 @@ export default function FilesDrawer({
           >
             <Upload className="size-3.5" />
             <span>Upload</span>
-          </button>
-          <button
-            onClick={onClose}
-            aria-label="Close panel"
-            className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-            title="Close drawer"
-          >
-            <PanelLeftClose className="size-4" />
           </button>
         </div>
       </div>

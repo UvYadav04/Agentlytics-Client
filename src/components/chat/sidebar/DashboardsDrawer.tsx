@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, PanelLeftClose } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { useGetDashboardsQuery } from "@/lib/api/apiSlice";
 
 export default function DashboardsDrawer({
@@ -9,7 +9,7 @@ export default function DashboardsDrawer({
   onClose,
 }: {
   workspaceId: string;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const { data: dashboards = [] } = useGetDashboardsQuery(workspaceId);
 
@@ -23,14 +23,6 @@ export default function DashboardsDrawer({
             {dashboards.length}
           </span>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          className="rounded-lg p-1 text-muted hover:bg-bg hover:text-text"
-          title="Close drawer"
-        >
-          <PanelLeftClose className="size-4" />
-        </button>
       </div>
 
       {/* Content */}
