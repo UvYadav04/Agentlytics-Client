@@ -227,6 +227,40 @@ function QuestionCard({
   );
 }
 
+export const DEFAULT_SHOW_ONLY_CURRENT_STEP = true;
+
+function getCurrentRow(rows: Row[], pendingQuestionId: string | null): Row | null {
+  if (rows.length === 0) return null;
+
+  // 1. If there's an active pending question, that is the current interactive step
+  if (pendingQuestionId) {
+    const questionRow = rows.find(
+      (r) =>
+        r.kind === "question" &&
+        r.question.question_id === pendingQuestionId &&
+        r.status === "pending"
+    );
+    if (questionRow) return questionRow;
+  }
+
+  // 2. If the latest row is a pending tool call, that is actively running
+  const lastRow = rows[rows.length - 1];
+  if (lastRow.kind === "pair" && lastRow.status === "pending") {
+    return lastRow;
+  }
+
+  // 3. If an earlier parent task is still pending, return the active pending task
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i];
+    if (r.kind === "pair" && r.status === "pending") {
+      return r;
+    }
+  }
+
+  // 4. Otherwise, return the latest row (e.g. plain event, or most recently completed tool result)
+  return lastRow;
+}
+
 export default function InvestigationTrail({
   investigationId,
   live,
@@ -234,6 +268,7 @@ export default function InvestigationTrail({
   startedAt = null,
   onAnswer,
   onPendingQuestionChange,
+  showOnlyCurrentStep = DEFAULT_SHOW_ONLY_CURRENT_STEP,
 }: {
   investigationId: string;
   live: boolean;
@@ -241,6 +276,7 @@ export default function InvestigationTrail({
   startedAt?: number | null;
   onAnswer?: (answer: string, questionId: string) => Promise<void> | void;
   onPendingQuestionChange?: (question: PendingQuestion | null) => void;
+  showOnlyCurrentStep?: boolean;
 }) {
   const events = useInvestigationStream(investigationId, () => {
     onTerminal?.();
@@ -259,6 +295,65 @@ export default function InvestigationTrail({
     return () => onPendingQuestionChange?.(null);
   }, []);
 
+  const currentRow = useMemo(
+    () => getCurrentRow(rows, pendingQuestionId),
+    [rows, pendingQuestionId]
+  );
+
+  // When showOnlyCurrentStep is enabled during live investigation, show ONLY the currently happening step.
+  if (showOnlyCurrentStep && live) {
+    return (
+      <ul className="mt-2 space-y-1.5">
+        {currentRow === null ? (
+          <li className="flex items-center gap-1.5 text-xs text-muted">
+            <span className="size-[7px] shrink-0 rounded-full bg-accent animate-pulse" />
+            <span className="mb-[2px]">connecting with analyzer...</span>
+          </li>
+        ) : currentRow.kind === "question" ? (
+          <QuestionCard
+            key={currentRow.key}
+            row={currentRow}
+            canAnswer={live && currentRow.question.question_id === pendingQuestionId}
+            onAnswer={onAnswer}
+          />
+        ) : currentRow.kind === "pair" ? (
+          <li key={currentRow.key} className="flex items-center gap-1.5 text-xs text-muted">
+            <span
+              className={`size-[7px] shrink-0 rounded-full ${
+                currentRow.status === "pending"
+                  ? "animate-pulse bg-accent"
+                  : currentRow.status === "success"
+                    ? "bg-accent-dark"
+                    : "bg-rust"
+              }`}
+            />
+            <span className="mb-[2px] min-w-0 flex-1 whitespace-pre-line">{currentRow.message}</span>
+            {currentRow.status === "error" && (
+              <X className="size-3 shrink-0 text-rust" aria-label="Failed" />
+            )}
+            {currentRow.status === "pending" && (
+              <Loader2 className="size-3 shrink-0 animate-spin text-muted" aria-label="Running" />
+            )}
+            {currentRow.status === "success" && (
+              <Check className="size-3 shrink-0 text-accent-dark" aria-label="Done" />
+            )}
+          </li>
+        ) : (
+          <li key={currentRow.key} className="flex items-center gap-1.5 text-xs text-muted">
+            <span
+              className={`size-[7px] shrink-0 rounded-full ${
+                TYPE_COLOR[currentRow.type] || "bg-accent"
+              } animate-pulse`}
+            />
+            <span className="mb-[2px] min-w-0 flex-1 whitespace-pre-line">{currentRow.message}</span>
+            <Loader2 className="size-3 shrink-0 animate-spin text-muted" aria-label="Running" />
+          </li>
+        )}
+      </ul>
+    );
+  }
+
+  // Setup to show all steps (preserved for switching back later)
   return (
     <ul className="mt-2 space-y-1.5 ">
       {live && <li className="flex place-content-start place-items-center  gap-1 text-xs text-muted">
